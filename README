@@ -1,0 +1,12 @@
+shncpd -- the simple, stupid and slow HNCP daemon
+=================================================
+
+shncpd is an implementation of the Home Networking Control Protocol.
+
+Compile with "make", or with "make EXTRA_DEFINES=-DUSE_LIBUBOX".
+
+To join a Homenet, just pass the list of interfaces on the command line:
+
+    shncpd eth0 wlan0
+
+Add "-d2" to see what is going on.

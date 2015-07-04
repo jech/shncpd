@@ -1,0 +1,41 @@
+.TH BABELD 8
+.SH NAME
+shncpd \- the simple, stupid and slow HNCP daemon
+.SH SYNOPSIS
+.B shncpd
+.IR option ...
+[
+.B \-\-
+]
+.IR interface ...
+.SH DESCRIPTION
+.B Shncpd
+is a standalone implementation of the Home Networking Control Protocol.
+.SH OPTIONS
+.TP
+.BI \-m " multicast-address"
+Specify the link-local multicast address to use.  The default is
+.BR ff02::8808 .
+.TP
+.BI \-p " port"
+Specify the UDP port number to use.  The default is
+.BR 8808 .
+.TP
+.B \-a
+Perform address allocation.
+.TP
+.BI \-d " level"
+Specify the amount of debugging information dumped to standard error.
+Useful values are
+.B 0
+and
+.BR 2 .
+.TP
+.SH SIGNALS
+.TP
+.B SIGUSR1
+Dump the current state to standard output.
+.SH SEE ALSO
+.BR babeld (8).
+.SH AUTHOR
+Juliusz Chroboczek.

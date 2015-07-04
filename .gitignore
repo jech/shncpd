@@ -1,0 +1,4 @@
+*.o
+*~
+shncpd
+shncpd.html
