@@ -67,6 +67,12 @@ flushbuf()
     rc = sendto(protocol_socket, sendbuf, buffered, 0,
                 (struct sockaddr*)to, sizeof(struct sockaddr_in6));
 
+    if(rc < 0) {
+        int saved_errno = errno;
+        perror("sendto");
+        errno = saved_errno;
+    }
+
     buffered_interface = NULL;
     buffered = 0;
     MEM_UNDEFINED(sendbuf, SENDBUF_SIZE);
