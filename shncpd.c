@@ -410,15 +410,15 @@ main(int argc, char **argv)
                         printf("  address %s/%d\n", buf, aa->prefixes[j].plen);
                     }
                 }
-                for(j = 0; j < numneighs; j++)
-                    printf("Neighbour %s %s last_contact %dms\n",
-                           format_32(neighs[j].id), neighs[j].interface->ifname,
-                           ts_minus_msec(&now, &neighs[j].last_contact));
-                for(j = 0; j < numnodes; j++)
-                    printf("Node %s hash %s length %d\n",
-                           format_32(nodes[j].id),
-                           format_64(nodes[j].datahash), nodes[j].datalen);
             }
+            for(i = 0; i < numneighs; i++)
+                printf("Neighbour %s %s last_contact %dms\n",
+                       format_32(neighs[i].id), neighs[i].interface->ifname,
+                       ts_minus_msec(&now, &neighs[i].last_contact));
+            for(i = 0; i < numnodes; i++)
+                printf("Node %s hash %s length %d\n",
+                       format_32(nodes[i].id),
+                       format_64(nodes[i].datahash), nodes[i].datalen);
             fflush(stdout);
             dumping = 0;
         }
@@ -540,7 +540,7 @@ main(int argc, char **argv)
 
  usage:
     fprintf(stderr,
-            "shcpd [-m group] [-p port] -a [-d debug-level] interface...");
+            "shcpd [-m group] [-p port] -a [-d debug-level] interface...\n");
  fail:
     exit(1);
 }
