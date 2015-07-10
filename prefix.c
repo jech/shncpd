@@ -141,7 +141,7 @@ prefix_list_member(const struct prefix *p, const struct prefix_list *pl)
     int i;
     for(i = 0; i < pl->numprefixes; i++) {
         struct prefix *q = &pl->prefixes[i];
-        if(p->plen == q->plen && memcmp(&p->p, &q->p, 16) != 0)
+        if(p->plen == q->plen && memcmp(&p->p, &q->p, 16) == 0)
             return 1;
     }
     return 0;
