@@ -223,8 +223,8 @@ random_bits(unsigned char *buf, int first, int len)
 {
     int i;
 
-    if(first != 0) {
-        unsigned char mask = ((0xFF << (first % 8)) ^ 0xFF) & 0xFF;
+    if(first % 8 != 0) {
+        unsigned char mask = (0xFF >> (first % 8)) ^ 0xFF;
         buf[first / 8] &= mask;
         buf[first / 8] |= random() & (0xFF ^ mask);
     }
@@ -233,11 +233,10 @@ random_bits(unsigned char *buf, int first, int len)
         buf[i] = random() % 0xFF;
 
     if((first + len) % 8 != 0) {
-        unsigned char mask = (0xFF << ((first + len) % 8)) & 0xFF;
+        unsigned char mask = 0xFF >> ((first + len) % 8);
         buf[(first + len) / 8] &= mask;
         buf[(first + len) / 8] |= random() & (0xFF ^ mask);
     }
-
 }
 
 int
