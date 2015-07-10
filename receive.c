@@ -582,12 +582,12 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
             continue;
         case 6: {
             int j;
-            unsigned char a[16] =
-                {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
             struct in6_addr addr;
             struct prefix_list *pl;
             debugf("         Name Server ");
             for(j = 0; j < bodylen / 4; j++) {
+                unsigned char a[16] =
+                    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
                 memcpy(a + 12, tlv + i + 2 + j * 4, 4);
                 memcpy(&addr, a, 16);
                 if(debug_level >= 2) {
@@ -595,7 +595,7 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
                     inet_ntop(AF_INET, &addr, b, sizeof(b));
                     debugf("%s ", b);
                 }
-                pl = prefix_list_cons(dns, &addr, 127, NULL, 0, 0);
+                pl = prefix_list_cons(dns, &addr, 128, NULL, 0, 0);
                 if(pl != NULL)
                     dns = pl;
             }
@@ -650,7 +650,7 @@ parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
                     inet_ntop(AF_INET6, &addr, b, sizeof(b));
                     debugf("%s ", b);
                 }
-                pl = prefix_list_cons(dns, &addr, 127, NULL, 0, 0);
+                pl = prefix_list_cons(dns, &addr, 128, NULL, 0, 0);
                 if(pl != NULL)
                     dns = pl;
             }
