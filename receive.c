@@ -413,12 +413,9 @@ parse_node_state(struct node *node)
             }
             prio = tlv[8] & 0xFF;
             parse_prefix(&addr, tlv + 10, plen);
-            if(debug_level >= 2) {
-                char b[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &addr, b, sizeof(b));
-                debugf("     ASSIGNED-PREFIX %s/%d (%d, prio=%d)\n",
-                       b, plen, eid, prio);
-            }
+            debugf("     ASSIGNED-PREFIX ");
+            debug_address(&addr);
+            debugf("/%d (%d, prio=%d)\n", plen, eid, prio);
             pl = prefix_list_cons(node->assigned,
                                   &addr, plen, node->id, eid, prio);
             if(pl)
@@ -435,11 +432,9 @@ parse_node_state(struct node *node)
             }
             DO_NTOHL(eid, tlv + 4);
             memcpy(&addr, tlv + 8, 16);
-            if(debug_level >= 2) {
-                char b[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &addr, b, sizeof(b));
-                debugf("     NODE-ADDRESS %s %d\n", b, eid);
-            }
+            debugf("     NODE-ADDRESS ");
+            debug_address(&addr);
+            debugf(" %d\n",eid);
             pl = prefix_list_cons(node->addresses,
                                   &addr, 128, node->id, eid, 0);
             if(pl)
@@ -516,11 +511,9 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
                 break;
             }
             parse_prefix(&addr, tlv + 13, plen);
-            if(debug_level >= 2) {
-                char b[INET6_ADDRSTRLEN];
-                inet_ntop(AF_INET6, &addr, b, sizeof(b));
-                debugf("       DELEGATED-PREFIX %s/%d\n", b, plen);
-            }
+            debugf("       DELEGATED-PREFIX ");
+            debug_address(&addr);
+            debugf("%d\n", plen);
             /* XXX parse embedded TLVs. */
             pl = prefix_list_cons(ext->delegated, &addr, plen, node->id, 0, 0);
             if(pl != NULL)
@@ -590,11 +583,8 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
                     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
                 memcpy(a + 12, tlv + i + 2 + j * 4, 4);
                 memcpy(&addr, a, 16);
-                if(debug_level >= 2) {
-                    char b[20];
-                    inet_ntop(AF_INET, &addr, b, sizeof(b));
-                    debugf("%s ", b);
-                }
+                debug_address(&addr);
+                debugf(" ");
                 pl = prefix_list_cons(dns, &addr, 128, NULL, 0, 0);
                 if(pl != NULL)
                     dns = pl;
@@ -645,11 +635,8 @@ parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
             debugf("         OPTION_DNS_SERVERS ");
             for(j = 0; j < bodylen / 16; j++) {
                 memcpy(&addr, tlv + i + 2 + j * 16, 16);
-                if(debug_level >= 2) {
-                    char b[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, &addr, b, sizeof(b));
-                    debugf("%s ", b);
-                }
+                debug_address(&addr);
+                debugf(" ");
                 pl = prefix_list_cons(dns, &addr, 128, NULL, 0, 0);
                 if(pl != NULL)
                     dns = pl;

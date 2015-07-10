@@ -34,11 +34,19 @@ THE SOFTWARE.
 #include "kernel.h"
 
 void
+debug_address(const struct in6_addr *a)
+{
+    char b[INET6_ADDRSTRLEN];
+    inet_ntop(AF_INET6, a, b, sizeof(b));
+    debugf("%s", b);
+}
+
+void
 debug_prefix(const struct prefix *p)
 {
     char b[INET6_ADDRSTRLEN];
     inet_ntop(AF_INET6, &p->p, b, sizeof(b));
-    debugf("%s/%d ", b, p->plen);
+    debugf("%s/%d", b, p->plen);
 }
 
 void
@@ -46,11 +54,14 @@ debug_prefix_list(const struct prefix_list *pl)
 {
     int i;
 
-    if(debug_level < 2)
+    if(debug_level < 2 || !pl)
         return;
 
-    for(i = 0; i < pl->numprefixes; i++)
+    for(i = 0; i < pl->numprefixes; i++) {
         debug_prefix(&pl->prefixes[i]);
+        if(i < pl->numprefixes - 1)
+            debugf(" ");
+    }
 }
 
 struct prefix_list *
