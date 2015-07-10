@@ -20,6 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-int kernel_address(int iface, const char *ifname,
+int kernel_address(int ifindex, const char *ifname,
                    const struct in6_addr *address, int plen,
                    int add);
+int kernel_apply(int ifindex, const char *ifname,
+                 const struct in6_addr *prefix, int plen,
+                 int add);

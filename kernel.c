@@ -33,7 +33,7 @@ static const unsigned char v4prefix[16] =
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
 
 int
-kernel_address(int iface, const char *ifname,
+kernel_address(int ifindex, const char *ifname,
                const struct in6_addr *address, int plen,
                int add)
 {
@@ -49,6 +49,36 @@ kernel_address(int iface, const char *ifname,
     }
 
     rc = snprintf(c, sizeof(c), "ip addr %s %s/%d dev %s",
+                  add ? "add" : "del", b, plen, ifname);
+    if(rc < 1 || rc >= sizeof(c)) {
+        errno = ENOSPC;
+        return -1;
+    }
+
+    rc = system(c);
+    if(rc >= 0 && WIFEXITED(rc) && WEXITSTATUS(rc) == 0)
+        return 1;
+
+    return -1;
+}
+
+int
+kernel_apply(int ifindex, const char *ifname,
+             const struct in6_addr *prefix, int plen,
+             int add)
+{
+    char b[INET6_ADDRSTRLEN];
+    char c[INET6_ADDRSTRLEN + 80];
+    int rc;
+
+    if(memcmp(prefix, v4prefix, 12) == 0) {
+        inet_ntop(AF_INET, (char*)prefix + 12, b, sizeof(b));
+        plen -= 96;
+    } else {
+        inet_ntop(AF_INET6, prefix, b, sizeof(b));
+    }
+
+    rc = snprintf(c, sizeof(c), "ip route %s %s/%d dev %s proto 43",
                   add ? "add" : "del", b, plen, ifname);
     if(rc < 1 || rc >= sizeof(c)) {
         errno = ENOSPC;
