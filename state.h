@@ -88,6 +88,7 @@ id_eq(const unsigned char *id1, const unsigned char *id2)
 }
 
 void trickle_reset_all(void);
+struct interface *find_interface(int ifindex);
 struct neighbour *
 find_neighbour(struct interface *interface, const unsigned char *id,
                unsigned int eid, const struct sockaddr_in6 *create);

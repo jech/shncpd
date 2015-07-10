@@ -61,6 +61,19 @@ trickle_reset_all()
         trickle_reset(&interfaces[i].trickle, 0);
 }
 
+struct interface *
+find_interface(int ifindex)
+{
+    int i;
+    for(i = 0; i < numinterfaces; i++) {
+        if(interfaces[i].ifindex <= 0)
+            continue;
+        if(interfaces[i].ifindex == ifindex)
+            return &interfaces[i];
+    }
+    return NULL;
+}
+
 struct neighbour *
 find_neighbour(struct interface *interface, const unsigned char *id,
                unsigned int eid, const struct sockaddr_in6 *create)
