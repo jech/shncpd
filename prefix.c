@@ -91,12 +91,16 @@ prefix_list_cons_prefix(struct prefix_list *pl, const struct prefix *p)
 struct prefix_list *
 prefix_list_cons(struct prefix_list *pl,
                  const struct in6_addr *a, int plen,
-                 unsigned int eid, int prio)
+                 const unsigned char *id, unsigned int eid, int prio)
 {
     struct prefix p;
 
     p.p = *a;
     p.plen = plen;
+    if(id)
+        memcpy(p.id, id, 4);
+    else
+        memset(p.id, 0, 4);
     p.eid = eid;
     p.prio = prio;
     return prefix_list_cons_prefix(pl, &p);
@@ -283,8 +287,7 @@ all_assigned_prefixes()
         if(nodes[i].assigned == NULL)
             continue;
         for(j = 0; j < nodes[i].assigned->numprefixes; j++) {
-            struct prefix *p = &nodes[i].assigned->prefixes[j];
-            pl2 = prefix_list_cons(pl, &p->p, p->plen, p->eid, p->prio);
+            pl2 = prefix_list_cons_prefix(pl, &nodes[i].assigned->prefixes[j]);
             if(pl2 == NULL) {
                 destroy_prefix_list(pl);
                 return NULL;
@@ -325,7 +328,7 @@ link_assigned_prefixes(int eid)
                 continue;
             p = &node->assigned->prefixes[j];
             if(p->eid == his_id) {
-                pl2 = prefix_list_cons(pl, &p->p, p->plen, p->eid, p->prio);
+                pl2 = prefix_list_cons_prefix(pl, p);
                 if(pl2 == NULL) {
                     destroy_prefix_list(pl);
                     return NULL;
@@ -351,7 +354,7 @@ all_delegated_prefixes()
                 continue;
             for(k = 0; k < nodes[i].exts[j]->delegated->numprefixes; k++) {
                 struct prefix *p = &nodes[i].exts[j]->delegated->prefixes[k];
-                pl2 = prefix_list_cons(pl, &p->p, p->plen, p->eid, p->prio);
+                pl2 = prefix_list_cons_prefix(pl, p);
                 if(pl2 == NULL) {
                     destroy_prefix_list(pl);
                     return NULL;
@@ -380,7 +383,7 @@ all_node_addresses()
             continue;
         for(j = 0; j < nodes[i].addresses->numprefixes; j++) {
             struct prefix *p = &nodes[i].addresses->prefixes[j];
-            pl2 = prefix_list_cons(pl, &p->p, p->plen, p->eid, p->prio);
+            pl2 = prefix_list_cons_prefix(pl, p);
             if(pl2 == NULL) {
                 destroy_prefix_list(pl);
                 return NULL;

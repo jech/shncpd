@@ -24,6 +24,7 @@ struct prefix {
     struct in6_addr p;
     unsigned char plen;
     unsigned short prio;
+    unsigned char id[4];
     unsigned int eid;
 };
 
@@ -37,6 +38,7 @@ struct prefix_list *create_prefix_list(void);
 void destroy_prefix_list(struct prefix_list *pl);
 struct prefix_list * prefix_list_cons(struct prefix_list *pl,
                                       const struct in6_addr *a, int plen,
+                                      const unsigned char *id,
                                       unsigned int eid, int prio);
 int prefix_list_member(const struct prefix *p, const struct prefix_list *pl);
 int prefix_assignment(int changed, int *republish);

@@ -419,7 +419,8 @@ parse_node_state(struct node *node)
                 debugf("     ASSIGNED-PREFIX %s/%d (%d, prio=%d)\n",
                        b, plen, eid, prio);
             }
-            pl = prefix_list_cons(node->assigned, &addr, plen, eid, prio);
+            pl = prefix_list_cons(node->assigned,
+                                  &addr, plen, node->id, eid, prio);
             if(pl)
                 node->assigned = pl;
             break;
@@ -439,7 +440,8 @@ parse_node_state(struct node *node)
                 inet_ntop(AF_INET6, &addr, b, sizeof(b));
                 debugf("     NODE-ADDRESS %s %d\n", b, eid);
             }
-            pl = prefix_list_cons(node->addresses, &addr, 128, eid, 0);
+            pl = prefix_list_cons(node->addresses,
+                                  &addr, 128, node->id, eid, 0);
             if(pl)
                 node->addresses = pl;
             break;
@@ -520,7 +522,7 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
                 debugf("       DELEGATED-PREFIX %s/%d\n", b, plen);
             }
             /* XXX parse embedded TLVs. */
-            pl = prefix_list_cons(ext->delegated, &addr, plen, 0, 0);
+            pl = prefix_list_cons(ext->delegated, &addr, plen, node->id, 0, 0);
             if(pl != NULL)
                 ext->delegated = pl;
             break;
@@ -593,7 +595,7 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
                     inet_ntop(AF_INET, &addr, b, sizeof(b));
                     debugf("%s ", b);
                 }
-                pl = prefix_list_cons(dns, &addr, 127, 0, 0);
+                pl = prefix_list_cons(dns, &addr, 127, NULL, 0, 0);
                 if(pl != NULL)
                     dns = pl;
             }
@@ -648,7 +650,7 @@ parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
                     inet_ntop(AF_INET6, &addr, b, sizeof(b));
                     debugf("%s ", b);
                 }
-                pl = prefix_list_cons(dns, &addr, 127, 0, 0);
+                pl = prefix_list_cons(dns, &addr, 127, NULL, 0, 0);
                 if(pl != NULL)
                     dns = pl;
             }
