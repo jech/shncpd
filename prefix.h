@@ -20,6 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#define BACKOFF_MAX_DELAY 4000
+#define FLOODING_DELAY 5000
+/* Should be 0 */
+#define ADOPT_MAX_DELAY 10
+
 struct prefix {
     struct in6_addr p;
     unsigned char plen;
@@ -34,6 +39,15 @@ struct prefix_list {
     short maxprefixes;
 };
 
+struct assigned_prefix {
+    struct prefix delegated;
+    struct prefix assigned;
+    int published;
+    int applied;
+    struct timespec backoff_timer, apply_timer;
+    struct in6_addr assigned_address;
+};
+
 void debug_address(const struct in6_addr *a);
 void debug_prefix(const struct prefix *p);
 void debug_prefix_list(const struct prefix_list *pl);
@@ -44,5 +58,5 @@ struct prefix_list * prefix_list_cons(struct prefix_list *pl,
                                       const unsigned char *id,
                                       unsigned int eid, int prio);
 int prefix_list_member(const struct prefix *p, const struct prefix_list *pl);
-int prefix_assignment(int changed, int *republish);
+int prefix_assignment(int changed, int *republish_return);
 void prefix_assignment_cleanup();

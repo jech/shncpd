@@ -30,8 +30,9 @@ struct interface {
     struct timespec last_request_sent;
     struct timespec last_sent;
     struct trickle_state trickle;
-    /* Address assignment */
-    struct prefix_list *assigned_addresses;
+    /* Prefix assignment */
+    struct assigned_prefix *assigned;
+    int numassigned;
 };
 
 struct node {

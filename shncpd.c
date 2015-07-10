@@ -62,7 +62,6 @@ struct timespec check_time = {0, 0};
 struct timespec prefix_assignment_time = {0, 0};
 
 int debug_level = 0;
-int addr_assign = 0;
 
 int
 hn_socket(int port)
@@ -262,7 +261,7 @@ main(int argc, char **argv)
     unsigned char *recvbuf = NULL;
 
     while(1) {
-        opt = getopt(argc, argv, "m:p:ad:");
+        opt = getopt(argc, argv, "m:p:d:");
         if(opt < 0)
             break;
 
@@ -274,9 +273,6 @@ main(int argc, char **argv)
             protocol_port = atoi(optarg);
             if(protocol_port <= 0 || protocol_port > 0xFFFF)
                 goto usage;
-            break;
-        case 'a':
-            addr_assign = 1;
             break;
         case 'd':
             debug_level = atoi(optarg);
@@ -397,19 +393,7 @@ main(int argc, char **argv)
         if(dumping) {
             int i;
             for(i = 0; i < numinterfaces; i++) {
-                int j;
-                struct prefix_list
-                    *aa = interfaces[i].assigned_addresses;
-                char buf[INET6_ADDRSTRLEN];
-
                 printf("Interface %s\n", interfaces[i].ifname);
-                if(aa) {
-                    for(j = 0; j < aa->numprefixes; j++) {
-                        inet_ntop(AF_INET6, &aa->prefixes[j].p,
-                                  buf, sizeof(buf));
-                        printf("  address %s/%d\n", buf, aa->prefixes[j].plen);
-                    }
-                }
             }
             for(i = 0; i < numneighs; i++)
                 printf("Neighbour %s %s last_contact %dms\n",
@@ -540,7 +524,7 @@ main(int argc, char **argv)
 
  usage:
     fprintf(stderr,
-            "shcpd [-m group] [-p port] -a [-d debug-level] interface...\n");
+            "shcpd [-m group] [-p port] [-d debug-level] interface...\n");
  fail:
     exit(1);
 }

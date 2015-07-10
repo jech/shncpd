@@ -21,9 +21,6 @@ Specify the link-local multicast address to use.  The default is
 Specify the UDP port number to use.  The default is
 .BR 8808 .
 .TP
-.B \-a
-Perform address allocation.
-.TP
 .BI \-d " level"
 Specify the amount of debugging information dumped to standard error.
 Useful values are

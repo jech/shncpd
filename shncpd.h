@@ -33,4 +33,3 @@ extern unsigned int protocol_port;
 extern int protocol_socket;
 extern int protocol_socket;
 extern int debug_level;
-extern int addr_assign;

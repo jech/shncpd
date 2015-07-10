@@ -206,14 +206,25 @@ format_my_state(unsigned char *buf, int buflen)
     PAD();
 
     for(j = 0; j < numinterfaces; j++) {
-        struct prefix_list *aa = interfaces[j].assigned_addresses;
-        if(aa) {
-            for(k = 0; k < aa->numprefixes; k++) {
+        for(k = 0; k < interfaces[j].numassigned; k++) {
+            const struct assigned_prefix *aa = &interfaces[j].assigned[k];
+            int pbytes = (aa->assigned.plen + 7) / 8;
+            if(aa->published) {
+                assert(aa->assigned.plen > 0);
+                CHECK(10 + pbytes);
+                SHORT(35);
+                SHORT(6 + pbytes);
+                LONG(interfaces[j].ifindex);
+                BYTE((aa->assigned.prio & 0x0F));
+                BYTE(aa->assigned.plen);
+                BYTES(&aa->assigned.p, pbytes);
+            }
+            if(!IN6_IS_ADDR_UNSPECIFIED(&aa->assigned_address)) {
                 CHECK(24);
                 SHORT(36);
                 SHORT(20);
                 LONG(interfaces[j].ifindex);
-                BYTES(&aa->prefixes[k].p, 16);
+                BYTES(&aa->assigned_address, 16);
                 PAD();
             }
         }
