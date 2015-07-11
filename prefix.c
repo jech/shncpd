@@ -594,7 +594,12 @@ prefix_assignment_1(struct interface *interface,
                             have_assigned ? &ap->assigned : NULL,
                             link_assigned, &best);
 
-    if(!have_best && !have_assigned) {
+    if(backoff_triggered && have_assigned) {
+        if(!ap->published) {
+            ap->published = 1;
+            republish = 1;
+        }
+    } else if(!have_best && !have_assigned) {
         if(ap->backoff_timer.tv_sec == 0) {
             if(!backoff_triggered) {
                 ts_add_random(&ap->backoff_timer, &now, BACKOFF_MAX_DELAY);
