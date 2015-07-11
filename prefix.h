@@ -22,8 +22,6 @@ THE SOFTWARE.
 
 #define BACKOFF_MAX_DELAY 4000
 #define FLOODING_DELAY 5000
-/* Should be 0 */
-#define ADOPT_MAX_DELAY 10
 
 struct prefix {
     struct in6_addr p;

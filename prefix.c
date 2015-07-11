@@ -659,7 +659,8 @@ prefix_assignment_1(struct interface *interface,
         if(!ap->published) {
             /* Adopt. */
             ts_zero(&ap->apply_timer);
-            ts_add_random(&ap->backoff_timer, &now, ADOPT_MAX_DELAY);
+            backoff_triggered = 1;
+            goto again;
         }
     } else {
         ts_zero(&ap->backoff_timer);
