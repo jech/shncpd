@@ -5,8 +5,17 @@ shncpd is an implementation of the Home Networking Control Protocol.
 
 Compile with "make", or with "make EXTRA_DEFINES=-DUSE_LIBUBOX".
 
-To join a Homenet, just pass the list of interfaces on the command line:
+To run, pass the list of interfaces on the command line:
 
     shncpd eth0 wlan0
 
-Add "-d2" to see what is going on.
+or
+
+    shncpd -d2 eth0 wlan0
+
+In order to announce routes to the locally applied prefixes over Babel,
+redistribute protocol 43:
+
+    babeld -C 'redistribute local deny' \
+           -C 'redistribute proto 43 allow' \
+           eth0 wlan0
