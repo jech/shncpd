@@ -467,6 +467,9 @@ best_prefix(const struct prefix *delegated, int eid,
         best = p;
     }
 
+    if(!best)
+        return 0;
+
     if(assigned && prefix_takes_precedence(assigned, best))
         return 0;
 
