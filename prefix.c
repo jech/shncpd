@@ -484,10 +484,12 @@ int
 publish_prefix(struct interface *interface, struct assigned_prefix *ap,
                int publish)
 {
-    if(publish)
+    if(publish) {
+        memcpy(ap->assigned.id, myid, 4);
         ap->published = 1;
-    else
+    } else {
         ap->published = 0;
+    }
 
     return 1;
 }
