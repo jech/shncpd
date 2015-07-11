@@ -58,7 +58,13 @@ extern int debug_level;
 static inline int
 min(int x, int y)
 {
-    return x >= y ? y : x;
+    return x > y ? y : x;
+}
+
+static inline int
+max(int x, int y)
+{
+    return x > y ? x : y;
 }
 
 int read_random_bytes(void *buf, int len);
