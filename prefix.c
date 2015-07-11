@@ -608,9 +608,10 @@ prefix_assignment_1(struct interface *interface,
  again:
 
     have_assigned = ap->assigned.plen > 0;
-    have_best = best_prefix(&ap->delegated, interface->ifindex,
-                            have_assigned ? &ap->assigned : NULL,
-                            link_assigned, &best);
+    have_best =
+        best_prefix(&ap->delegated, interface->ifindex,
+                    have_assigned && ap->published ? &ap->assigned : NULL,
+                    link_assigned, &best);
 
     if(backoff_triggered && have_assigned) {
         if(!ap->published) {
