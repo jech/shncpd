@@ -310,7 +310,7 @@ random_prefix(struct prefix *res, int plen, int zero_bits, int tweak_v6,
     for(i = 0; i < 20; i++) {
         memset(pp, 0, 16);
         memcpy(pp, &in->p, 16);
-        random_bits(pp, in->plen + zero_bits, plen);
+        random_bits(pp, in->plen + zero_bits, (plen - (in->plen + zero_bits)));
         if(tweak_v6 && in->plen <= 68)
             pp[8] &= ~3;
 
