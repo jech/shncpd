@@ -529,8 +529,8 @@ destroy_assigned(struct interface *interface, struct assigned_prefix *ap)
             kernel_apply(interface->ifindex, interface->ifname,
                          &ap->assigned.p, ap->assigned.plen, 0);
         ap->applied = 0;
-        memset(&ap->apply_timer, 0, sizeof(ap->apply_timer));
     }
+    memset(&ap->apply_timer, 0, sizeof(ap->apply_timer));
     publish_prefix(interface, ap, 0);
     memset(&ap->assigned, 0, sizeof(ap->assigned));
     return 1;
@@ -605,6 +605,8 @@ prefix_assignment_1(struct interface *interface,
             ap->published = 1;
             republish = 1;
         }
+        if(!ap->applied)
+            ts_add_msec(&ap->apply_timer, &now, 2 * FLOODING_DELAY);
     } else if(!have_best && !have_assigned) {
         if(ap->backoff_timer.tv_sec == 0) {
             if(!backoff_triggered) {
@@ -677,6 +679,7 @@ address_assignment_1(struct interface *interface,
                         prefix_list_overlap(&p, addresses, 0))) {
         destroy_assigned_address(interface, ap);
         memset(&ap->assigned_address, 0, 16);
+        have_address = 0;
     }
 
     if(have_address || !have_assigned)
@@ -753,6 +756,8 @@ prefix_assignment(int changed, int *republish_return)
                 120 : 64;
             int rc;
             if(changed || bt) {
+                if(!changed)
+                    memset(&ap->backoff_timer, 0, sizeof(ap->backoff_timer));
                 rc = prefix_assignment_1(&interfaces[i],
                                          &interfaces[i].assigned[j],
                                          plen, !changed,
