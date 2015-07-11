@@ -194,6 +194,7 @@ format_my_state(unsigned char *buf, int buflen)
         BYTES(neighs[j].id, 4);
         LONG(neighs[j].eid);
         LONG(neighs[j].interface->ifindex);
+        PAD();
     }
 
     CHECK(11);
@@ -202,7 +203,6 @@ format_my_state(unsigned char *buf, int buflen)
     SHORT(0x100);
     SHORT(0);
     BYTES("SHNCPD/0", 8);
-
     PAD();
 
     for(j = 0; j < numinterfaces; j++) {
@@ -218,6 +218,7 @@ format_my_state(unsigned char *buf, int buflen)
                 BYTE((aa->assigned.prio & 0x0F));
                 BYTE(aa->assigned.plen);
                 BYTES(&aa->assigned.p, pbytes);
+                PAD();
             }
             if(!IN6_IS_ADDR_UNSPECIFIED(&aa->assigned_address)) {
                 CHECK(24);

@@ -411,7 +411,7 @@ parse_node_state(struct node *node)
                 fprintf(stderr, "Truncated ASSIGNED-PREFIX.\n");
                 break;
             }
-            prio = tlv[8] & 0xFF;
+            prio = tlv[8] & 0x0F;
             parse_prefix(&addr, tlv + 10, plen);
             debugf("     ASSIGNED-PREFIX ");
             debug_address(&addr);
