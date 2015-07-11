@@ -138,6 +138,13 @@ ts_add_random(struct timespec *d, const struct timespec *s, int msecs)
     ts_add_nsec(d, s, (random() % msecs) * million + random() % million);
 }
 
+void
+ts_zero(struct timespec *d)
+{
+    d->tv_sec = 0;
+    d->tv_nsec = 0;
+}
+
 const char *
 format_32(const unsigned char *data)
 {

@@ -77,6 +77,7 @@ int ts_minus_msec(const struct timespec *s1, const struct timespec *s2);
 void ts_min_sec(struct timespec *d, int secs);
 void ts_add_msec(struct timespec *d, const struct timespec *s, int msecs);
 void ts_add_random(struct timespec *d, const struct timespec *s, int msecs);
+void ts_zero(struct timespec *d);
 const char *format_32(const unsigned char *data);
 const char *format_64(const unsigned char *data);
 void do_debugf(int level, const char *format, ...)
