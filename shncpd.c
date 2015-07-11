@@ -391,9 +391,27 @@ main(int argc, char **argv)
             break;
 
         if(dumping) {
-            int i;
+            int i, j;
             for(i = 0; i < numinterfaces; i++) {
                 printf("Interface %s\n", interfaces[i].ifname);
+                for(j = 0; j < interfaces[i].numassigned; j++) {
+                    char d[INET6_ADDRSTRLEN], a[INET6_ADDRSTRLEN];
+                    struct assigned_prefix *ap = &interfaces[i].assigned[j];
+                    inet_ntop(AF_INET6, &ap->delegated.p, d, sizeof(d));
+                    inet_ntop(AF_INET6, &ap->assigned.p, a, sizeof(a));
+                    printf("  Assigned %s/%d%s from %s/%d\n",
+                           a, ap->assigned.plen,
+                           (ap->published && ap->applied) ?
+                           " (published, applied)" :
+                           ap->published ? " (published)" :
+                           ap->applied ? " (applied)" : "",
+                           d, ap->delegated.plen);
+                    if(!IN6_IS_ADDR_UNSPECIFIED(&ap->assigned_address)) {
+                        inet_ntop(AF_INET6, &ap->assigned_address,
+                                  a, sizeof(a));
+                        printf("    Address %s\n", a);
+                    }
+                }
             }
             for(i = 0; i < numneighs; i++)
                 printf("Neighbour %s %s last_contact %dms\n",
@@ -403,6 +421,7 @@ main(int argc, char **argv)
                 printf("Node %s hash %s length %d\n",
                        format_32(nodes[i].id),
                        format_64(nodes[i].datahash), nodes[i].datalen);
+            printf("\n");
             fflush(stdout);
             dumping = 0;
         }
