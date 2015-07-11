@@ -490,7 +490,7 @@ int
 destroy_assigned_address(struct interface *interface,
                          struct assigned_prefix *ap)
 {
-    int rc;
+    int rc = 0;
 
     if(IN6_IS_ADDR_UNSPECIFIED(&ap->assigned_address))
         return 0;
@@ -501,10 +501,12 @@ destroy_assigned_address(struct interface *interface,
 
     assert(ap->assigned.plen > 0 && ap->applied);
 
-    rc = kernel_address(interface->ifindex, interface->ifname,
-                        &ap->assigned_address, ap->assigned.plen, 0);
-    if(rc < 0)
-        fprintf(stderr, "Couldn't remove address.\n");
+    if(interface->ifindex > 0) {
+        rc = kernel_address(interface->ifindex, interface->ifname,
+                            &ap->assigned_address, ap->assigned.plen, 0);
+        if(rc < 0)
+            fprintf(stderr, "Couldn't remove address.\n");
+    }
 
     return rc;
 }
@@ -520,8 +522,9 @@ destroy_assigned(struct interface *interface, struct assigned_prefix *ap)
         debugf(" from %s.\n", interface->ifname);
 
         assert(ap->assigned.plen > 0);
-        kernel_apply(interface->ifindex, interface->ifname,
-                     &ap->assigned.p, ap->assigned.plen, 0);
+        if(interface->ifindex > 0)
+            kernel_apply(interface->ifindex, interface->ifname,
+                         &ap->assigned.p, ap->assigned.plen, 0);
         ap->applied = 0;
         memset(&ap->apply_timer, 0, sizeof(ap->apply_timer));
     }
@@ -711,7 +714,8 @@ prefix_assignment(int changed, int *republish_return)
             /* Flush any delegated prefixes that have disappeared. */
             j = 0;
             while(j < interfaces[i].numassigned) {
-                if(!prefix_list_member(&interfaces[i].assigned[j].delegated,
+                if(interfaces[i].ifindex == 0 ||
+                   !prefix_list_member(&interfaces[i].assigned[j].delegated,
                                        delegated))
                     flush_assigned(&interfaces[i], &interfaces[i].assigned[j]);
                 else
