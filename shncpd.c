@@ -51,7 +51,7 @@ THE SOFTWARE.
 struct timespec now;
 const struct timeval zero = {0, 0};
 
-static volatile sig_atomic_t exiting = 0, dumping = 0, changed = 0;
+static volatile sig_atomic_t exiting = 0, dumping = 0, rescan = 0;
 struct in6_addr protocol_group;
 unsigned int protocol_port = 8808;
 int protocol_socket;
@@ -147,9 +147,9 @@ sigdump(int signo)
 }
 
 static void
-sigchanged(int signo)
+sigrescan(int signo)
 {
-    changed = 1;
+    rescan = 1;
 }
 
 static void
@@ -183,7 +183,7 @@ init_signals(void)
     sigaction(SIGUSR1, &sa, NULL);
 
     sigemptyset(&ss);
-    sa.sa_handler = sigchanged;
+    sa.sa_handler = sigrescan;
     sa.sa_mask = ss;
     sa.sa_flags = 0;
     sigaction(SIGUSR2, &sa, NULL);
@@ -224,7 +224,7 @@ check_interface(struct interface *iif)
     return 0;
 }
 
-static void
+static int
 check_neighs()
 {
     int i = 0;
@@ -245,10 +245,10 @@ check_neighs()
     }
     if(flushed) {
         silly_walk(find_node(myid, 0));
-        prefix_assignment(1, NULL);
-        republish(1, 0);
+        return 1;
+    } else {
+        return 0;
     }
-    return;
 }
 
 int
@@ -407,12 +407,20 @@ main(int argc, char **argv)
             dumping = 0;
         }
 
-        if(changed) {
-            for(i = 0; i < numinterfaces; i++)
-                check_interface(&interfaces[i]);
-            check_neighs();
+        if(rescan || ts_compare(&now, &check_time) > 0) {
+            int rc, changed = 0;
+            for(i = 0; i < numinterfaces; i++) {
+                rc = check_interface(&interfaces[i]);
+                changed = changed || rc;
+            }
+            rc = check_neighs();
+            changed = changed || rc;
             ts_add_random(&check_time, &now, 20000);
-            changed = 0;
+            if(changed) {
+                prefix_assignment(1, NULL);
+                republish(1, 1);
+            }
+            rescan = 0;
         }
 
         for(i = 0; i < numinterfaces; i++) {
@@ -425,13 +433,6 @@ main(int argc, char **argv)
                 buffer_network_state(NULL, &interfaces[i]);
                 interfaces[i].last_sent = now;
             }
-        }
-
-        if(ts_compare(&now, &check_time) > 0) {
-            for(i = 0; i < numinterfaces; i++)
-                check_interface(&interfaces[i]);
-            check_neighs();
-            ts_add_random(&check_time, &now, 20000);
         }
 
         if(ts_compare(&now, &prefix_assignment_time) > 0) {

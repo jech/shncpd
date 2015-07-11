@@ -255,7 +255,7 @@ silly_walk(struct node *root)
         }
     }
     debugf("Silly walk flushed %d/%d nodes.\n", flushed, num);
-    return 1;
+    return !!flushed;
 }
 
 int
