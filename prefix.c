@@ -533,7 +533,7 @@ destroy_assigned(struct interface *interface, struct assigned_prefix *ap)
                          &ap->assigned.p, ap->assigned.plen, 0);
         ap->applied = 0;
     }
-    memset(&ap->apply_timer, 0, sizeof(ap->apply_timer));
+    ts_zero(&ap->apply_timer);
     publish_prefix(interface, ap, 0);
     memset(&ap->assigned, 0, sizeof(ap->assigned));
     return 1;
@@ -645,7 +645,7 @@ prefix_assignment_1(struct interface *interface,
             }
         }
     } else if(have_best && !have_assigned) {
-        memset(&ap->backoff_timer, 0, sizeof(ap->backoff_timer));
+        ts_zero(&ap->backoff_timer);
         ap->assigned = best;
         publish_prefix(interface, ap, 0);
         ts_add_msec(&ap->apply_timer, &now, 2 * FLOODING_DELAY);
@@ -658,11 +658,11 @@ prefix_assignment_1(struct interface *interface,
 
         if(!ap->published) {
             /* Adopt. */
-            memset(&ap->apply_timer, 0, sizeof(ap->apply_timer));
+            ts_zero(&ap->apply_timer);
             ts_add_random(&ap->backoff_timer, &now, ADOPT_MAX_DELAY);
         }
     } else {
-        memset(&ap->backoff_timer, 0, sizeof(ap->backoff_timer));
+        ts_zero(&ap->backoff_timer);
         if(prefix_eq(&best, &ap->assigned)) {
             publish_prefix(interface, ap, 0);
             if(!ap->applied && ap->apply_timer.tv_sec == 0) {
@@ -767,7 +767,7 @@ prefix_assignment(int changed, int *republish_return)
             int rc;
             if(changed || bt) {
                 if(!changed)
-                    memset(&ap->backoff_timer, 0, sizeof(ap->backoff_timer));
+                    ts_zero(&ap->backoff_timer);
                 rc = prefix_assignment_1(&interfaces[i],
                                          &interfaces[i].assigned[j],
                                          !changed,
@@ -788,7 +788,7 @@ prefix_assignment(int changed, int *republish_return)
                 } else {
                     fprintf(stderr, "Couldn't apply prefix.\n");
                 }
-                memset(&ap->apply_timer, 0, sizeof(ap->apply_timer));
+                ts_zero(&ap->apply_timer);
             }
 
             ts_min(&again, &ap->backoff_timer);
