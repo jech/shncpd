@@ -301,6 +301,9 @@ random_prefix(struct prefix *res, int plen, int zero_bits, int tweak_v6,
     int i;
     struct prefix p;
 
+    if(plen > 128)
+        plen = 128;
+
     if(in->plen + zero_bits > plen)
         return 0;
 
@@ -582,9 +585,18 @@ flush_assigned(struct interface *interface, struct assigned_prefix *ap)
     }
 }
 
+static int
+select_plen(struct prefix *delegated)
+{
+    if(prefix_v4(delegated))
+        return min(126, max(120, delegated->plen + 4));
+    else
+        return 64;
+}
+
 int
 prefix_assignment_1(struct interface *interface,
-                    struct assigned_prefix *ap, int plen,
+                    struct assigned_prefix *ap,
                     int backoff_triggered,
                     const struct prefix_list *all_assigned,
                     const struct prefix_list *link_assigned)
@@ -612,7 +624,8 @@ prefix_assignment_1(struct interface *interface,
             if(!backoff_triggered) {
                 ts_add_random(&ap->backoff_timer, &now, BACKOFF_MAX_DELAY);
             } else {
-                rc = random_prefix(&ap->assigned, plen, 0, 1,
+                rc = random_prefix(&ap->assigned, select_plen(&ap->delegated),
+                                   0, 1,
                                    &ap->delegated, all_assigned);
                 if(rc > 0) {
                     ap->assigned.prio = 2;
@@ -751,16 +764,13 @@ prefix_assignment(int changed, int *republish_return)
             int bt =
                 ap->backoff_timer.tv_sec > 0 &&
                 ts_compare(&now, &ap->backoff_timer) > 0;
-            int plen =
-                prefix_v4(&interfaces[i].assigned[j].delegated) ?
-                120 : 64;
             int rc;
             if(changed || bt) {
                 if(!changed)
                     memset(&ap->backoff_timer, 0, sizeof(ap->backoff_timer));
                 rc = prefix_assignment_1(&interfaces[i],
                                          &interfaces[i].assigned[j],
-                                         plen, !changed,
+                                         !changed,
                                          all_assigned, link_assigned);
                 republish = republish || rc;
             }
