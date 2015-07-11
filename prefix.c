@@ -686,6 +686,7 @@ address_assignment_1(struct interface *interface,
     int have_address = !IN6_IS_ADDR_UNSPECIFIED(&ap->assigned_address);
     struct prefix p = {.p = ap->assigned_address, .plen = 128};
     int rc;
+    int republish = 0;
 
     if(have_address && (!have_assigned ||
                         !prefix_within(&p, &ap->assigned) ||
@@ -693,15 +694,16 @@ address_assignment_1(struct interface *interface,
         destroy_assigned_address(interface, ap);
         memset(&ap->assigned_address, 0, 16);
         have_address = 0;
+        republish = 1;
     }
 
     if(have_address || !have_assigned)
-        return 0;
+        return republish;
 
     rc = random_prefix(&p, 128, 2, 0, &ap->assigned, addresses);
     if(rc <= 0) {
         fprintf(stderr, "Couldn't generate random address.\n");
-        return -1;
+        return republish;
     }
 
     debugf("Adding address ");
@@ -711,12 +713,12 @@ address_assignment_1(struct interface *interface,
                         &p.p, ap->assigned.plen, 1);
     if(rc >= 0) {
         ap->assigned_address = p.p;
+        republish = 1;
     } else {
         perror("Couldn't assign address");
-        return -1;
     }
 
-    return 1;
+    return republish;
 }
 
 int
@@ -784,7 +786,9 @@ prefix_assignment(int changed, int *republish_return)
                                   &ap->assigned.p, ap->assigned.plen, 1);
                 if(rc >= 0) {
                     ap->applied = 1;
-                    address_assignment_1(&interfaces[i], ap, addresses);
+                    republish = 1;
+                    rc = address_assignment_1(&interfaces[i], ap, addresses);
+                    republish = republish || rc;
                 } else {
                     fprintf(stderr, "Couldn't apply prefix.\n");
                 }
