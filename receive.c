@@ -513,7 +513,7 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
             parse_prefix(&addr, tlv + 13, plen);
             debugf("       DELEGATED-PREFIX ");
             debug_address(&addr);
-            debugf("%d\n", plen);
+            debugf("/%d\n", plen);
             /* XXX parse embedded TLVs. */
             pl = prefix_list_cons(ext->delegated, &addr, plen, node->id, 0, 0);
             if(pl != NULL)
