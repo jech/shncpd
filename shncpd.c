@@ -44,8 +44,8 @@ THE SOFTWARE.
 #include "state.h"
 #include "send.h"
 #include "receive.h"
-#include "ra.h"
 #include "prefix.h"
+#include "ra.h"
 #include "util.h"
 
 #define RECVBUF_SIZE 4000

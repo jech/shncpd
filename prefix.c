@@ -29,8 +29,8 @@ THE SOFTWARE.
 #include "shncpd.h"
 #include "trickle.h"
 #include "state.h"
-#include "ra.h"
 #include "prefix.h"
+#include "ra.h"
 #include "util.h"
 #include "kernel.h"
 
