@@ -35,8 +35,10 @@ THE SOFTWARE.
 #include "shncpd.h"
 #include "ra.h"
 #include "util.h"
+#include "kernel.h"
 
 int ra_socket = -1;
+int previously_a_router = 0;
 
 int
 setup_ra_socket()
@@ -141,7 +143,7 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
     SHORT(0);
     BYTE(0);
     BYTE(0);
-    SHORT(router > 0 ? 7200 : 0);
+    SHORT(router > 0 ? 3600 : 0);
     LONG(0);
     LONG(0);
 
@@ -155,8 +157,8 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
             BYTE(3);
             BYTE(4);
             BYTE(p->plen);
-            BYTE(0x80 | 0x40);
-            LONG(router >= 0 ? 2700 : 0);
+            BYTE(router >= 0 ? (0x80 | 0x40) : 0x80);
+            LONG(router >= 0 ? 3600 : 0);
             LONG(router >= 0 ? 1800 : 0);
             LONG(0);
             BYTES(&p->p, 16);
@@ -222,8 +224,6 @@ send_multicast_ra(struct interface *interface, int router)
         }
         return 1;
     }
-
-    schedule_ra(interface, 0, 1);
 
     if(ts_minus_msec(&now, &interface->last_ra_sent) < MIN_DELAY_BETWEEN_RAS)
         return 0;
@@ -291,7 +291,11 @@ void
 ra_cleanup()
 {
     if(ra_socket >= 0) {
-        send_multicast_ra(NULL, -1);
+        if(previously_a_router) {
+            debugf("Sending RA retractions.\n");
+            send_multicast_ra(NULL, -1);
+        }
+        previously_a_router = 0;
         close(ra_socket);
     }
     ra_socket = -1;
@@ -314,10 +318,24 @@ router_advertisement(int doread)
         struct interface *interface = &interfaces[i];
         if(interface->ifindex <= 0)
             continue;
-        if(ts_compare(&now, &interface->ra_timeout) >= 0) {
-            rc = send_multicast_ra(interface, 1);
-            if(rc < 0)
-                perror("send_ra");
+
+        if(kernel_router() > 0) {
+            if(!previously_a_router)
+                debugf("Became a router -- sending RAs.\n");
+            previously_a_router = 1;
+            if(ts_compare(&now, &interface->ra_timeout) >= 0) {
+                schedule_ra(interface, 0, 1);
+                rc = send_multicast_ra(interface, 1);
+                if(rc < 0)
+                    perror("send_ra");
+            }
+        } else {
+            schedule_ra(interface, 0, 1);
+            if(previously_a_router) {
+                debugf("No longer a router -- sending RA retractions.\n");
+                send_multicast_ra(NULL, -1);
+            }
+            previously_a_router = 0;
         }
     }
     return 1;

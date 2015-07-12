@@ -63,7 +63,7 @@ struct timespec check_time = {0, 0};
 struct timespec prefix_assignment_time = {0, 0};
 
 int debug_level = 0;
-int send_router_advertisements = 0;
+int send_router_advertisements = 1;
 
 int
 hn_socket(int port)
@@ -281,7 +281,7 @@ main(int argc, char **argv)
             debug_level = atoi(optarg);
             break;
         case 'R':
-            send_router_advertisements = 1;
+            send_router_advertisements = 0;
             break;
         default:
             goto usage;

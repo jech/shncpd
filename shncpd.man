@@ -29,7 +29,8 @@ and
 .BR 2 .
 .TP
 .B \-R
-Send router advertisements.  By default, router advertisements are not sent.
+Suppress router advertisements.  By default, router advertisements are
+sent if we are a router.
 .TP
 .SH SIGNALS
 .TP
