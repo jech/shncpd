@@ -24,6 +24,8 @@ THE SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "util.h"
@@ -90,4 +92,26 @@ kernel_apply(int ifindex, const char *ifname,
         return 1;
 
     return -1;
+}
+
+int
+kernel_router()
+{
+    char buf[100];
+    int fd, rc;
+
+    fd = open("/proc/sys/net/ipv6/conf/all/forwarding", O_RDONLY);
+    if(fd < 0)
+        return -1;
+
+    rc = read(fd, buf, 99);
+    if(rc < 0) {
+        close(fd);
+        return -1;
+    }
+    close(fd);
+
+    buf[rc] = '\0';
+
+    return atoi(buf);
 }

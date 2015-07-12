@@ -26,3 +26,4 @@ int kernel_address(int ifindex, const char *ifname,
 int kernel_apply(int ifindex, const char *ifname,
                  const struct in6_addr *prefix, int plen,
                  int add);
+int kernel_router();
