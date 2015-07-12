@@ -56,5 +56,6 @@ struct prefix_list * prefix_list_cons(struct prefix_list *pl,
                                       const unsigned char *id,
                                       unsigned int eid, int prio);
 int prefix_list_member(const struct prefix *p, const struct prefix_list *pl);
+int prefix_v4(struct prefix *p);
 int prefix_assignment(int changed, int *republish_return);
 void prefix_assignment_cleanup();

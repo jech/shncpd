@@ -33,6 +33,9 @@ struct interface {
     /* Prefix assignment */
     struct assigned_prefix *assigned;
     int numassigned;
+    /* Router advertisements */
+    struct timespec ra_timeout;
+    struct timespec last_ra_sent;
 };
 
 struct node {

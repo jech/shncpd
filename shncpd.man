@@ -28,6 +28,9 @@ Useful values are
 and
 .BR 2 .
 .TP
+.B \-R
+Send router advertisements.  By default, router advertisements are not sent.
+.TP
 .SH SIGNALS
 .TP
 .B SIGUSR1

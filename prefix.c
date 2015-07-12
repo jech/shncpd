@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "shncpd.h"
 #include "trickle.h"
 #include "state.h"
+#include "ra.h"
 #include "prefix.h"
 #include "util.h"
 #include "kernel.h"
@@ -325,7 +326,7 @@ random_prefix(struct prefix *res, int plen, int zero_bits, int tweak_v6,
     return 0;
 }
 
-static int
+int
 prefix_v4(struct prefix *p)
 {
     return p->plen >= 96 && IN6_IS_ADDR_V4MAPPED(&p->p);
@@ -534,6 +535,8 @@ destroy_assigned(struct interface *interface, struct assigned_prefix *ap)
             kernel_apply(interface->ifindex, interface->ifname,
                          &ap->assigned.p, ap->assigned.plen, 0);
         ap->applied = 0;
+        schedule_ra(NULL, 1, 0);
+        /* XXX should schedule RA retraction. */
     }
     ts_zero(&ap->apply_timer);
     publish_prefix(interface, ap, 0);
@@ -791,6 +794,7 @@ prefix_assignment(int changed, int *republish_return)
                 if(rc >= 0) {
                     ap->applied = 1;
                     republish = 1;
+                    schedule_ra(NULL, 1, 0);
                     rc = address_assignment_1(&interfaces[i], ap, addresses);
                     republish = republish || rc;
                 } else {

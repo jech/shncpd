@@ -44,6 +44,7 @@ THE SOFTWARE.
 #include "state.h"
 #include "send.h"
 #include "receive.h"
+#include "ra.h"
 #include "prefix.h"
 #include "util.h"
 
@@ -62,6 +63,7 @@ struct timespec check_time = {0, 0};
 struct timespec prefix_assignment_time = {0, 0};
 
 int debug_level = 0;
+int send_router_advertisements = 0;
 
 int
 hn_socket(int port)
@@ -217,6 +219,7 @@ check_interface(struct interface *iif)
                 iif->ifindex = 0;
                 goto fail;
             }
+            schedule_ra(iif, 1, 0);
             return 1;
         }
     }
@@ -261,7 +264,7 @@ main(int argc, char **argv)
     unsigned char *recvbuf = NULL;
 
     while(1) {
-        opt = getopt(argc, argv, "m:p:d:");
+        opt = getopt(argc, argv, "m:p:d:R");
         if(opt < 0)
             break;
 
@@ -276,6 +279,9 @@ main(int argc, char **argv)
             break;
         case 'd':
             debug_level = atoi(optarg);
+            break;
+        case 'R':
+            send_router_advertisements = 1;
             break;
         default:
             goto usage;
@@ -346,6 +352,12 @@ main(int argc, char **argv)
         ts_add_random(&check_time, &now, 20000);
     }
 
+    if(send_router_advertisements) {
+        rc = ra_setup();
+        if(rc < 0)
+            perror("Couldn't initialise RA.\n");
+    }
+
     ts_add_random(&prefix_assignment_time, &now, 5000);
 
     init_signals();
@@ -362,12 +374,15 @@ main(int argc, char **argv)
         for(i = 0; i < numinterfaces; i++) {
             struct timespec t;
             struct timespec k;
+            if(interfaces[i].ifindex == 0)
+                continue;
             trickle_deadline(&t, &interfaces[i].trickle);
             ts_min(&ts, &t);
             ts_add_msec(&k, &interfaces[i].last_sent,
                         DNCP_KEEPALIVE_INTERVAL);
             ts_add_random(&k, &k, HNCP_I_min / 2);
             ts_min(&ts, &k);
+            ts_min(&ts, &interfaces[i].ra_timeout);
         }
 
         FD_ZERO(&readfds);
@@ -378,7 +393,10 @@ main(int argc, char **argv)
             ts_minus(&ts, &ts, &now);
 
             FD_SET(protocol_socket, &readfds);
-            rc = pselect(protocol_socket + 1, &readfds, NULL, NULL, &ts, NULL);
+            if(ra_socket >= 0)
+                FD_SET(ra_socket, &readfds);
+            rc = pselect(max(protocol_socket, ra_socket) + 1,
+                         &readfds, NULL, NULL, &ts, NULL);
             if(rc < 0 && errno != EINTR) {
                 perror("select");
                 sleep(1);
@@ -534,17 +552,32 @@ main(int argc, char **argv)
             parse_packet(recvbuf, len, &sin6, unicast, &interfaces[interface]);
             MEM_UNDEFINED(recvbuf, RECVBUF_SIZE);
         }
+
     fail2:
         flushbuf();
+
+        if(send_router_advertisements) {
+            if(FD_ISSET(ra_socket, &readfds)) {
+                router_advertisement(1);
+            } else {
+                for(i = 0; i < numinterfaces; i++)
+                    if(interfaces[i].ra_timeout.tv_sec > 0 &&
+                       ts_compare(&now, &interfaces[i].ra_timeout) >= 0) {
+                        router_advertisement(0);
+                        break;
+                    }
+            }
+        }
     }
 
+    ra_cleanup();
     prefix_assignment_cleanup();
 
     return 0;
 
  usage:
     fprintf(stderr,
-            "shcpd [-m group] [-p port] [-d debug-level] interface...\n");
+            "shcpd [-m group] [-p port] [-d debug-level] [-R] interface...\n");
  fail:
     exit(1);
 }
