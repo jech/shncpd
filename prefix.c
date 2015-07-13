@@ -535,8 +535,8 @@ destroy_assigned(struct interface *interface, struct assigned_prefix *ap)
             kernel_apply(interface->ifindex, interface->ifname,
                          &ap->assigned.p, ap->assigned.plen, 0);
         ap->applied = 0;
+        ra_retract(&ap->assigned);
         schedule_ra(NULL, 1, 0);
-        /* XXX should schedule RA retraction. */
     }
     ts_zero(&ap->apply_timer);
     publish_prefix(interface, ap, 0);

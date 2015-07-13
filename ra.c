@@ -148,18 +148,38 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
     LONG(0);
 
     if(interface) {
+        if(interface->retractions) {
+            for(j = 0; j < interface->retractions->numprefixes; j++) {
+                struct prefix *p = &interfaces->retractions->prefixes[j];
+                CHECK(32);
+                BYTE(3);
+                BYTE(4);
+                BYTE(p->plen);
+                BYTE(0x80);
+                LONG(0);
+                LONG(0);
+                LONG(0);
+                BYTES(&p->p, 16);
+            }
+        }
+
+        destroy_prefix_list(interface->retractions);
+        interface->retractions = NULL;
+
         for(j = 0; j < interface->numassigned; j++) {
             struct assigned_prefix *ap = &interface->assigned[j];
             struct prefix *p = &ap->assigned;
+
             if(!ap->applied || prefix_v4(&ap->assigned))
                 continue;
+
             CHECK(32);
             BYTE(3);
             BYTE(4);
             BYTE(p->plen);
-            BYTE(router >= 0 ? (0x80 | 0x40) : 0x80);
-            LONG(router >= 0 ? 3600 : 0);
-            LONG(router >= 0 ? 1800 : 0);
+            BYTE(router < 0 ? 0x80 : (0x80 | 0x40));
+            LONG(router < 0 ? 0 : 3600);
+            LONG(router < 0 ? 0 : 1800);
             LONG(0);
             BYTES(&p->p, 16);
         }
@@ -171,6 +191,20 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
 
  fail:
     return -1;
+}
+
+void
+ra_retract(const struct prefix *prefix)
+{
+    int i;
+    for(i = 0; i < numinterfaces; i++) {
+        if(interfaces[i].ifindex > 0) {
+            struct prefix_list *pl =
+                prefix_list_cons_prefix(interfaces[i].retractions, prefix);
+            if(pl)
+                interfaces[i].retractions = pl;
+        }
+    }
 }
 
 void

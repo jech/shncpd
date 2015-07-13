@@ -36,6 +36,7 @@ struct interface {
     /* Router advertisements */
     struct timespec ra_timeout;
     struct timespec last_ra_sent;
+    struct prefix_list *retractions;
 };
 
 struct node {

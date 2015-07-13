@@ -29,5 +29,6 @@ THE SOFTWARE.
 extern int ra_socket;
 int ra_setup(void);
 void ra_cleanup(void);
+void ra_retract(const struct prefix *retract);
 void schedule_ra(struct interface *interface, int soon, int override);
 int router_advertisement(int doread);
