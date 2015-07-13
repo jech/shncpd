@@ -520,22 +520,22 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
                 ext->delegated = pl;
             break;
         }
-        case 37:
+        case 37: {
+            struct prefix_list *dns;
             debugf("       DHCPV6-DATA\n");
-            if(ext->dns == NULL)
-                ext->dns = create_prefix_list();
-            if(ext->dns == NULL)
-                break;
-            parse_dhcpv6(tlv + 4, bodylen, ext->dns);
+            dns = parse_dhcpv6(tlv + 4, bodylen, ext->dns);
+            if(dns)
+                ext->dns = dns;
             break;
-        case 38:
+        }
+        case 38: {
+            struct prefix_list *dns;
             debugf("       DHCPV4-DATA\n");
-            if(ext->dns == NULL)
-                ext->dns = create_prefix_list();
-            if(ext->dns == NULL)
-                break;
-            parse_dhcpv4(tlv + 4, bodylen, ext->dns);
+            dns = parse_dhcpv4(tlv + 4, bodylen, ext->dns);
+            if(dns)
+                ext->dns = dns;
             break;
+        }
         default:
             if(debug_level >= 3)
                 debugf("       %d: %d\n", type, bodylen);
@@ -552,7 +552,7 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
     return NULL;
 }
 
-int
+struct prefix_list *
 parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
 {
     int i = 0;
@@ -600,13 +600,13 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
 
         i += 2 + bodylen;
     }
-    return 1;
+    return dns;
 
  fail:
-    return -1;
+    return NULL;
 }
 
-int
+struct prefix_list *
 parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
 {
     int i = 0;
@@ -652,8 +652,8 @@ parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
         i += 4 + bodylen;
         i += -i & 3;
     }
-    return 1;
+    return dns;
 
  fail:
-    return -1;
+    return NULL;
 }
