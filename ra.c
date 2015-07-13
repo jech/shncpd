@@ -87,10 +87,6 @@ setup_ra_socket()
             goto fail;
     }
 
-    rc = setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &one, sizeof(one));
-    if(rc < 0)
-        goto fail;
-
     ICMP6_FILTER_SETBLOCKALL(&filter);
     ICMP6_FILTER_SETPASS(ND_ROUTER_SOLICIT, &filter);
 
