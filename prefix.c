@@ -417,10 +417,6 @@ all_delegated_prefixes()
                     destroy_prefix_list(pl);
                     return NULL;
                 }
-                if(pl2 == NULL) {
-                    destroy_prefix_list(pl);
-                    return NULL;
-                }
                 pl = pl2;
             }
         }
