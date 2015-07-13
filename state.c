@@ -344,3 +344,29 @@ destroy_external(struct external *e)
     destroy_prefix_list(e->dns);
     free(e);
 }
+
+struct prefix_list *
+all_dns(int v6)
+{
+    int i, j, k;
+    struct prefix_list *pl = create_prefix_list(), *pl2;
+
+    for(i = 0; i < numnodes; i++) {
+        for(j = 0; j < nodes[i].numexts; j++) {
+            if(nodes[i].exts[j]->dns == NULL)
+                continue;
+            for(k = 0; k < nodes[i].exts[j]->dns->numprefixes; k++) {
+                struct prefix *p = &nodes[i].exts[j]->dns->prefixes[k];
+                if(!prefix_v4(p) != !!v6)
+                    continue;
+                pl2 = prefix_list_cons_prefix(pl, p);
+                if(pl2 == NULL) {
+                    destroy_prefix_list(pl);
+                    return NULL;
+                }
+                pl = pl2;
+            }
+        }
+    }
+    return pl;
+}

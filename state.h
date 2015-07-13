@@ -105,3 +105,4 @@ int republish(int do_neighs, int reset);
 void node_hash(unsigned char *h, const unsigned char *data, int len);
 int network_hash(unsigned char *);
 void destroy_external(struct external *e);
+struct prefix_list *all_dns(int v6);
