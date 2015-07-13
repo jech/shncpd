@@ -179,6 +179,22 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
             LONG(0);
             BYTES(&p->p, 16);
         }
+
+        if(router >= 0) {
+            struct prefix_list *dns = all_dns(1);
+
+            if(dns && dns->numprefixes > 0) {
+                CHECK(8 + dns->numprefixes * 16);
+                BYTE(25);
+                BYTE(1 + dns->numprefixes * 2);
+                SHORT(0);
+                LONG(MAX_RTR_ADV_INTERVAL * 3 / 2);
+                for(j = 0; j < dns->numprefixes; j++) {
+                    BYTES(&dns->prefixes[j].p, 16);
+                }
+            }
+            destroy_prefix_list(dns);
+        }
     }
 
     debugf("-> Router Advertisement\n");
