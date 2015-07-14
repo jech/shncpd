@@ -661,6 +661,7 @@ prefix_assignment_1(struct interface *interface,
         if(!ap->published) {
             /* Adopt. */
             ts_zero(&ap->apply_timer);
+            ap->assigned.prio = 2;
             backoff_triggered = 1;
             goto again;
         }
