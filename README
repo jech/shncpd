@@ -3,7 +3,8 @@ shncpd -- the simple, stupid and slow HNCP daemon
 
 shncpd is an implementation of the Home Networking Control Protocol.
 
-Compile with "make", or with "make EXTRA_DEFINES=-DUSE_LIBUBOX".
+Compile with "make", or with "make EXTRA_DEFINES=-DUSE_LIBUBOX", or with
+"make EXTRA_DEFINES=-DUSE_OPENSSL LDLIBS=-lcrypto".
 
 To run, pass the list of interfaces on the command line:
 
