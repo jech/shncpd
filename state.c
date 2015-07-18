@@ -40,6 +40,11 @@ THE SOFTWARE.
 #define MD5Final(x,ctx) md5_end(x,ctx)
 #define MD5Update(ctx,x,y) md5_hash(x,y,ctx)
 #define MD5_CTX md5_ctx_t
+#elif USE_OPENSSL
+#include <openssl/md5.h>
+#define MD5Init(ctx) MD5_Init(ctx)
+#define MD5Final(x,ctx) MD5_Final(x,ctx)
+#define MD5Update(ctx,x,y) MD5_Update(ctx,x,y)
 #else
 #include <bsd/md5.h>
 #endif
