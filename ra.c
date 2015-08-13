@@ -51,7 +51,7 @@ setup_ra_socket()
         ra_socket = -1;
     }
 
-    s = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
+    s = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
     if(s < 0)
         return -1;
 
