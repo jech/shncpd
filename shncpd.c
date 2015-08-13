@@ -47,6 +47,7 @@ THE SOFTWARE.
 #include "prefix.h"
 #include "ra.h"
 #include "util.h"
+#include "kernel.h"
 
 #define RECVBUF_SIZE 4000
 struct timespec now;
@@ -64,6 +65,7 @@ struct timespec prefix_assignment_time = {0, 0};
 
 int debug_level = 0;
 int send_router_advertisements = 1;
+int was_a_router = 0;
 
 int
 hn_socket(int port)
@@ -254,6 +256,26 @@ check_neighs()
     }
 }
 
+static int
+check_routing()
+{
+    int is_now_a_router = kernel_router() > 0;
+
+    if(is_now_a_router != was_a_router) {
+        debugf("Change in routing status: %d\n", is_now_a_router);
+        was_a_router = is_now_a_router;
+        return 1;
+    }
+
+    return 0;
+}
+
+int
+is_a_router()
+{
+    return was_a_router;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -351,6 +373,8 @@ main(int argc, char **argv)
         }
         ts_add_random(&check_time, &now, 20000);
     }
+
+    check_routing();
 
     if(send_router_advertisements) {
         rc = ra_setup();
@@ -450,6 +474,9 @@ main(int argc, char **argv)
                 rc = check_interface(&interfaces[i]);
                 changed = changed || rc;
             }
+
+            check_routing();
+
             rc = check_neighs();
             changed = changed || rc;
             ts_add_random(&check_time, &now, 20000);
