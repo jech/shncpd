@@ -124,9 +124,9 @@ flush_neighbour(struct neighbour *neigh)
 
     assert(i >= 0 && i < numneighs);
 
-    if( i < numneighs - 1)
+    if(i < numneighs - 1)
         neighs[i] = neighs[numneighs - 1];
-    MEM_UNDEFINED(neighs + numneighs, sizeof(struct neighbour));
+    MEM_UNDEFINED(neighs + numneighs - 1, sizeof(struct neighbour));
 
     numneighs--;
     republish(1, 1);
@@ -186,7 +186,7 @@ flush_node(struct node *node)
     if(i < numnodes - 1)
         memmove(nodes + i, nodes + i + 1,
                 (numnodes - i - 1) * sizeof(struct node));
-    MEM_UNDEFINED(nodes + numnodes, sizeof(struct node));
+    MEM_UNDEFINED(nodes + numnodes - 1, sizeof(struct node));
 
     numnodes--;
 }
