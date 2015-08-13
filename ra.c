@@ -38,7 +38,6 @@ THE SOFTWARE.
 #include "kernel.h"
 
 int ra_socket = -1;
-int previously_a_router = 0;
 
 int
 setup_ra_socket()
@@ -334,14 +333,26 @@ void
 ra_cleanup()
 {
     if(ra_socket >= 0) {
-        if(previously_a_router) {
-            debugf("Sending RA retractions.\n");
+        if(is_a_router()) {
+            debugf("Retracting RA.\n");
             send_multicast_ra(NULL, -1);
         }
-        previously_a_router = 0;
         close(ra_socket);
     }
     ra_socket = -1;
+}
+
+int
+ra_routing_change(int router)
+{
+    if(router) {
+        debugf("Now a router: sending RA.");
+        send_multicast_ra(NULL, 1);
+    } else {
+        debugf("No longer a router: retracting RA.\n");
+        send_multicast_ra(NULL, -1);
+    }
+    return 1;
 }
 
 int
@@ -363,23 +374,13 @@ router_advertisement(int doread)
             continue;
 
         if(kernel_router() > 0) {
-            if(!previously_a_router)
-                debugf("Became a router -- sending RAs.\n");
-            previously_a_router = 1;
             if(ts_compare(&now, &interface->ra_timeout) >= 0) {
-                schedule_ra(interface, 0, 1);
                 rc = send_multicast_ra(interface, 1);
                 if(rc < 0)
                     perror("send_ra");
             }
-        } else {
-            schedule_ra(interface, 0, 1);
-            if(previously_a_router) {
-                debugf("No longer a router -- sending RA retractions.\n");
-                send_multicast_ra(NULL, -1);
-            }
-            previously_a_router = 0;
         }
+        schedule_ra(interface, 0, 1);
     }
     return 1;
 }
