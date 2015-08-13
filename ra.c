@@ -233,12 +233,9 @@ schedule_ra(struct interface *interface, int soon, int override)
         return;
     }
 
-    if(soon >= 2) {
+    if(soon) {
         a = 0;
         b = MAX_RA_DELAY_TIME;
-    } else if(soon == 1) {
-        a = 0;
-        b = 5000;
     } else {
         a = MIN_RTR_ADV_INTERVAL;
         b = MAX_RTR_ADV_INTERVAL;
@@ -329,7 +326,7 @@ ra_setup()
         perror("setup_ra_socket");
         return rc;
     }
-    schedule_ra(NULL, 1, 2);
+    schedule_ra(NULL, 1, 1);
     return 1;
 }
 
