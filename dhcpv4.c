@@ -95,6 +95,16 @@ find_lease(const unsigned char *ip, int create)
     return NULL;
 }
 
+static int
+lease_match(const unsigned char *cid, int cidlen,
+            const unsigned char *chaddr, const struct lease *lease)
+{
+    if(cidlen > 0)
+        return lease->cidlen == cidlen && memcmp(lease->cid, cid, cidlen) == 0;
+    else
+        return memcmp(chaddr, lease->chaddr, 16) == 0;
+}
+
 int
 setup_dhcpv4_socket()
 {
@@ -567,9 +577,7 @@ dhcpv4_receive()
     switch(type) {
     case 1: {                   /* DHCPDISCOVER */
         struct lease *lease = find_lease(ip, 1);
-        if(lease &&
-           memcmp(lease->chaddr, chaddr, 16) == 0 &&
-           lease->cidlen == cidlen && memcmp(lease->cid, cid, cidlen) == 0) {
+        if(lease && lease_match(cid, cidlen, chaddr, lease)) {
             lease->ifindex = ifindex;
             lease->end = now.tv_sec;
             free(cid);
@@ -606,9 +614,7 @@ dhcpv4_receive()
     }
     case 3: {                   /* DHCPREQUEST */
         struct lease *lease = find_lease(ip, 0);
-        if(lease &&
-           memcmp(lease->chaddr, chaddr, 16) == 0 &&
-           lease->cidlen == cidlen && memcmp(lease->cid, cid, cidlen) == 0) {
+        if(lease && lease_match(cid, cidlen, chaddr, lease)) {
             lease->ifindex = ifindex;
             lease->end = now.tv_sec + LEASE_TIME;
             rc = dhcpv4_send(dhcpv4_socket, 5, xid, chaddr, myaddr,
