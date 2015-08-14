@@ -145,7 +145,7 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
     if(interface) {
         if(interface->retractions) {
             for(j = 0; j < interface->retractions->numprefixes; j++) {
-                struct prefix *p = &interfaces->retractions->prefixes[j];
+                struct prefix *p = &interface->retractions->prefixes[j];
                 CHECK(32);
                 BYTE(3);
                 BYTE(4);
@@ -362,8 +362,7 @@ router_advertisement(int doread)
 
     if(doread) {
         rc = recv_rs();
-        if(rc > 0) {
-        } else if(errno != EAGAIN) {
+        if(rc < 0 && errno != EAGAIN) {
             perror("recv(RA)");
         }
     }
@@ -373,14 +372,14 @@ router_advertisement(int doread)
         if(interface->ifindex <= 0)
             continue;
 
-        if(kernel_router() > 0) {
-            if(ts_compare(&now, &interface->ra_timeout) >= 0) {
+        if(ts_compare(&now, &interface->ra_timeout) >= 0) {
+            if(kernel_router() > 0) {
                 rc = send_multicast_ra(interface, 1);
                 if(rc < 0)
                     perror("send_ra");
             }
+            schedule_ra(interface, 0, 1);
         }
-        schedule_ra(interface, 0, 1);
     }
     return 1;
 }
