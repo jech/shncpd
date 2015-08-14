@@ -9,9 +9,11 @@ CFLAGS = $(CDEBUGFLAGS) $(DEFINES) $(EXTRA_DEFINES)
 
 LDLIBS = -lbsd
 
-SRCS = shncpd.c state.c send.c receive.c ra.c prefix.c trickle.c kernel.c util.c
+SRCS = shncpd.c state.c send.c receive.c ra.c dhcpv4.c prefix.c \
+       trickle.c kernel.c util.c
 
-OBJS = shncpd.o state.o send.o receive.o ra.o prefix.o trickle.o kernel.o util.o
+OBJS = shncpd.o state.o send.o receive.o ra.o dhcpv4.o prefix.o \
+       trickle.o kernel.o util.o
 
 shncpd: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o shncpd $(OBJS) $(LDLIBS)

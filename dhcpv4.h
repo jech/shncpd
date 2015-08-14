@@ -20,19 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#define HNCP_I_min 200
-#define HNCP_I_max 25000
+extern int dhcpv4_socket;
 
-#define DNCP_KEEPALIVE_INTERVAL 20000
-#define DNCP_KEEPALIVE_MULTIPLIER_PERCENT 210
-
-extern unsigned char myid[4];
-extern struct timespec now;
-extern struct in6_addr protocol_group;
-extern unsigned int protocol_port;
-extern int protocol_socket;
-extern int protocol_socket;
-extern int debug_level;
-
-extern int send_ra, send_dhcpv4;
-extern int is_a_router(void);
+int dhcpv4_setup(void);
+int dhcpv4_receive(void);
+void dhcpv4_cleanup(void);

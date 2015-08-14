@@ -29,8 +29,12 @@ and
 .BR 2 .
 .TP
 .B \-R
-Suppress router advertisements.  By default, router advertisements are
-sent if we are a router.
+Disable the router advertisement (RA) server.  By default, router
+advertisements are sent if we are a router.
+.TP
+.B \-D
+Disable the DHCPv4 server.  By default, the DHCPv4 server is enabled if we
+are a router.
 .TP
 .SH SIGNALS
 .TP

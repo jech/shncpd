@@ -46,6 +46,7 @@ THE SOFTWARE.
 #include "receive.h"
 #include "prefix.h"
 #include "ra.h"
+#include "dhcpv4.h"
 #include "util.h"
 #include "kernel.h"
 
@@ -65,6 +66,7 @@ struct timespec prefix_assignment_time = {0, 0};
 
 int debug_level = 0;
 int send_router_advertisements = 1;
+int send_dhcpv4 = 1;
 int was_a_router = 0;
 
 int
@@ -306,6 +308,9 @@ main(int argc, char **argv)
         case 'R':
             send_router_advertisements = 0;
             break;
+        case 'D':
+            send_dhcpv4 = 0;
+            break;
         default:
             goto usage;
         }
@@ -383,6 +388,12 @@ main(int argc, char **argv)
             perror("Couldn't initialise RA.\n");
     }
 
+    if(send_dhcpv4) {
+        rc = dhcpv4_setup();
+        if(rc < 0)
+            perror("Couldn't initialise DHCPv4.\n");
+    }
+
     ts_add_random(&prefix_assignment_time, &now, 5000);
 
     init_signals();
@@ -420,7 +431,10 @@ main(int argc, char **argv)
             FD_SET(protocol_socket, &readfds);
             if(ra_socket >= 0)
                 FD_SET(ra_socket, &readfds);
-            rc = pselect(max(protocol_socket, ra_socket) + 1,
+            if(dhcpv4_socket >= 0)
+                FD_SET(dhcpv4_socket, &readfds);
+            rc = pselect(max(protocol_socket,
+                             max(ra_socket, dhcpv4_socket)) + 1,
                          &readfds, NULL, NULL, &ts, NULL);
             if(rc < 0 && errno != EINTR) {
                 perror("select");
@@ -596,9 +610,16 @@ main(int argc, char **argv)
                     }
             }
         }
+
+        if(send_dhcpv4) {
+            if(FD_ISSET(dhcpv4_socket, &readfds)) {
+                dhcpv4_receive();
+            }
+        }
     }
 
     ra_cleanup();
+    dhcpv4_cleanup();
     prefix_assignment_cleanup();
 
     return 0;

@@ -200,7 +200,11 @@ format_my_state(unsigned char *buf, int buflen)
     CHECK(11);
     SHORT(32);
     SHORT(12);
-    SHORT(0x100);
+    if(send_dhcpv4) {
+        SHORT(0x104);               /* Version 1, L = 4 */
+    } else {
+        SHORT(0x100);
+    }
     SHORT(0);
     BYTES("SHNCPD/0", 8);
     PAD();
