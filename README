@@ -19,3 +19,6 @@ redistribute protocol 43:
     babeld -C 'redistribute local deny' \
            -C 'redistribute proto 43 allow' \
            eth0 wlan0
+
+Shncpd will automatically detect that we are acting as a router, and
+start sending RAs and acting as a DHCPv4 server.
