@@ -205,6 +205,22 @@ prefix_within(const struct prefix *p, const struct prefix *q)
     return 0;
 }
 
+static const unsigned char v4prefix[16] =
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
+
+int
+prefix_within_v4(const unsigned char *p4, const struct prefix *q)
+{
+    struct prefix p;
+    memset(&p, 0, sizeof(p));
+    memcpy(&p.p, v4prefix, 12);
+    memcpy(((unsigned char*)&p.p) + 12, p4, 4);
+    p.plen = 128;
+
+    return prefix_within(&p, q);
+}
+
+
 int
 prefix_overlaps(const struct prefix *p, const struct prefix *q)
 {
@@ -219,12 +235,27 @@ prefix_list_within(const struct prefix *p, const struct prefix_list *pl)
 {
     int i;
 
+    if(pl == NULL)
+        return 0;
+
     for(i = 0; i < pl->numprefixes; i++) {
         if(prefix_within(p, &pl->prefixes[i]))
             return 1;
     }
 
     return 0;
+}
+
+int
+prefix_list_within_v4(const unsigned char *p4, const struct prefix_list *pl)
+{
+    struct prefix p;
+    memset(&p, 0, sizeof(p));
+    memcpy(&p.p, v4prefix, 12);
+    memcpy(((unsigned char*)&p.p) + 12, p4, 4);
+    p.plen = 128;
+
+    return prefix_list_within(&p, pl);
 }
 
 int
@@ -235,6 +266,9 @@ prefix_list_overlap(const struct prefix *p, const struct prefix_list *pl,
     int i;
 
     memcpy(pp, &p->p, 16);
+
+    if(pl == NULL)
+        return 0;
 
     for(i = 0; i < pl->numprefixes; i++) {
         struct prefix *q = &pl->prefixes[i];
@@ -295,7 +329,8 @@ random_bits(unsigned char *buf, int first, int len)
 }
 
 int
-random_prefix(struct prefix *res, int plen, int zero_bits, int tweak_v6,
+random_prefix(struct prefix *res,
+              int plen, int zero_bits, int tweak_v6,
               const struct prefix *in, const struct prefix_list *out)
 {
     unsigned char pp[16];
@@ -330,6 +365,42 @@ int
 prefix_v4(struct prefix *p)
 {
     return p->plen >= 96 && IN6_IS_ADDR_V4MAPPED(&p->p);
+}
+
+int
+generate_random_v4(unsigned char *ip, const struct prefix_list *pl)
+{
+    int i, rc;
+    struct prefix p;
+
+    if(pl == NULL)
+        return -1;
+
+    for(i = 0; i < pl->numprefixes; i++) {
+        if(prefix_v4(&pl->prefixes[i])) {
+            rc = random_prefix(&p, 128, 0, 0, &pl->prefixes[i], NULL);
+            if(rc >= 0) {
+                memcpy(ip, (unsigned char*)&p.p + 12, 4);
+                return 1;
+            }
+        }
+    }
+    return -1;
+}
+
+int
+interface_v4(struct interface *interface, unsigned char *v4_return)
+{
+    int i;
+
+    for(i = 0; i < interface->numassigned; i++) {
+        struct in6_addr *a = &interface->assigned[i].assigned_address;
+        if(IN6_IS_ADDR_V4MAPPED(a)) {
+            memcpy(v4_return, (unsigned char*)a + 12, 4);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 struct prefix_list *

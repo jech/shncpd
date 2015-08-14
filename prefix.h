@@ -46,6 +46,8 @@ struct assigned_prefix {
     struct in6_addr assigned_address;
 };
 
+struct interface;
+
 void debug_address(const struct in6_addr *a);
 void debug_prefix(const struct prefix *p);
 void debug_prefix_list(const struct prefix_list *pl);
@@ -58,6 +60,13 @@ struct prefix_list * prefix_list_cons(struct prefix_list *pl,
                                       const unsigned char *id,
                                       unsigned int eid, int prio);
 int prefix_list_member(const struct prefix *p, const struct prefix_list *pl);
+int prefix_within(const struct prefix *p, const struct prefix *q);
+int prefix_within_v4(const unsigned char *p4, const struct prefix *q);
+int prefix_list_within(const struct prefix *p, const struct prefix_list *pl);
+int prefix_list_within_v4(const unsigned char *p4,
+                          const struct prefix_list *pl);
 int prefix_v4(struct prefix *p);
+int interface_v4(struct interface *interface, unsigned char *v4_return);
+int generate_random_v4(unsigned char *ip, const struct prefix_list *pl);
 int prefix_assignment(int changed, int *republish_return);
 void prefix_assignment_cleanup();
