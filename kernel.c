@@ -91,6 +91,8 @@ kernel_apply(int ifindex, const char *ifname,
     if(rc >= 0 && WIFEXITED(rc) && WEXITSTATUS(rc) == 0)
         return 1;
 
+    if(rc >= 0)
+        errno = EIO;            /* any better ideas? */
     return -1;
 }
 
