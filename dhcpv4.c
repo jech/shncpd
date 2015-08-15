@@ -37,7 +37,7 @@ THE SOFTWARE.
 #include "prefix.h"
 #include "util.h"
 
-#define LEASE_TIME 3600
+#define LEASE_TIME 600
 
 int dhcpv4_socket = -1;
 
