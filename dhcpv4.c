@@ -105,6 +105,19 @@ lease_match(const unsigned char *cid, int cidlen,
         return memcmp(chaddr, lease->chaddr, 16) == 0;
 }
 
+static struct lease *
+find_matching_lease(const unsigned char *cid, int cidlen,
+                    const unsigned char *chaddr)
+{
+    int i;
+
+    for(i = 0; i < numleases; i++)
+        if(lease_match(cid, cidlen, chaddr, &leases[i]))
+            return &leases[i];
+
+    return NULL;
+}
+
 int
 interface_dhcpv4(struct interface *interface)
 {
@@ -610,35 +623,32 @@ dhcpv4_receive()
     debugf("\n");
 
     if(!interface_dhcpv4(interface))
-        goto nak;
-
-    if(type != 8 && !prefix_list_within_v4(ip, pl)) {
-        rc = generate_v4(ip, netmask, pl);
-        if(rc < 0) {
-            if(type == 1 || type == 3)
-                goto nak;
-            return 0;
-        }
-    }
+        return 0;
 
     dns = all_dns(0);
 
     switch(type) {
     case 1:                     /* DHCPDISCOVER */
     case 3: {                   /* DHCPREQUEST */
-        struct lease *lease = find_lease(ip, 1);
-        if(lease && !lease_match(cid, cidlen, chaddr, lease) &&
-           lease->end >= now.tv_sec) {
-            unsigned char newip[4];
+        struct lease *lease = NULL;
+        if(memcmp(ip, zeroes, 4) == 0)
+            lease = find_matching_lease(cid, cidlen, chaddr);
+        else
+            lease = find_lease(ip, 0);
+        if(!lease ||
+           (!lease_match(cid, cidlen, chaddr, lease) &&
+            lease->end >= now.tv_sec)) {
             if(type == 3)
                 goto nak;
-            rc = generate_v4(newip, netmask, pl);
+            rc = generate_v4(ip, netmask, pl);
             if(rc < 0)
                 goto nak;
-            if(lease)
-                flush_lease(lease);
-            lease = find_lease(newip, 1);
+            lease = find_lease(ip, 1);
             if(lease == NULL)
+                goto nak;
+        } else {
+            rc = compute_netmask(netmask, lease->ip, pl);
+            if(rc < 0)
                 goto nak;
         }
         memcpy(lease->chaddr, chaddr, 16);
