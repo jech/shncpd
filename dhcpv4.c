@@ -651,7 +651,17 @@ dhcpv4_receive()
         break;
     }
     case 4: {                   /* DHCPDECLINE */
-        fprintf(stderr, "Received DHCPDECLINE.\n");
+        struct lease *lease = find_lease(ip, 0);
+        fprintf(stderr, "Received DHCPDECLINE");
+        if(lease && lease->end >= now.tv_sec) {
+            fprintf(stderr, " (already assigned).\n");
+        } else if(lease && lease->end >= now.tv_sec - LEASE_TIME) {
+            fprintf(stderr, " (marking as used).\n");
+            memcpy(lease->ip, zeroes, 4);
+            lease->end = now.tv_sec + LEASE_TIME;
+        } else {
+            fprintf(stderr, " (ignored).\n");
+        }
         break;
     }
     case 7: {                   /* DHCPRELEASE */
