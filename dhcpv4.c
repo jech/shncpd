@@ -476,7 +476,7 @@ compute_netmask(unsigned char *mask,
             plen = pl->prefixes[i].plen - 96;
             m = 0xFFFFFFFFu << (32 - plen);
             DO_HTONL(mask, m);
-            return 1;
+            return plen;
         }
     }
     return -1;
