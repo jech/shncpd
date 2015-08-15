@@ -1,4 +1,4 @@
-.TH BABELD 8
+.TH SHNCPD 8
 .SH NAME
 shncpd \- the simple, stupid and slow HNCP daemon
 .SH SYNOPSIS
@@ -25,7 +25,7 @@ Specify the UDP port number to use.  The default is
 Specify the amount of debugging information dumped to standard error.
 Useful values are
 .B 0
-and
+(the default) and
 .BR 2 .
 .TP
 .B \-R
@@ -35,7 +35,6 @@ advertisements are sent if we are a router.
 .B \-D
 Disable the DHCPv4 server.  By default, the DHCPv4 server is enabled if we
 are a router.
-.TP
 .SH SIGNALS
 .TP
 .B SIGUSR1
