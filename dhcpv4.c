@@ -460,10 +460,46 @@ compute_netmask(unsigned char *mask,
     unsigned int m;
     for(i = 0; i < pl->numprefixes; i++) {
         if(prefix_within_v4(ip, &pl->prefixes[i])) {
+            int plen;
             assert(pl->prefixes[i].plen >= 96);
-            m = 0xFFFFFFFFu << (128 - pl->prefixes[i].plen);
+            plen = pl->prefixes[i].plen - 96;
+            m = 0xFFFFFFFFu << (32 - plen);
             DO_HTONL(mask, m);
             return 1;
+        }
+    }
+    return -1;
+}
+
+static int
+generate_v4(unsigned char *ip_return, unsigned char *mask_return,
+            const struct prefix_list *pl)
+{
+    int i, j, rc;
+
+    for(i = 0; i < 2; i++) {
+        for(j = 0; j < 20; j++) {
+            unsigned char ip[4];
+            struct lease *lease;
+            rc = generate_random_v4(ip, pl);
+            if(rc < 0)
+                return -1;
+            lease = find_lease(ip, 0);
+            if(!lease || (i > 0 && lease->end < now.tv_sec)) {
+                int plen;
+                unsigned char mask[4];
+                unsigned int addr;
+                plen = compute_netmask(mask, ip, pl);
+                if(plen < 0 || plen > 30)
+                    continue;
+                /* Check that we are not in the first quarter. */
+                DO_NTOHS(addr, ip);
+                if((addr & (3 << (30 - plen))) == 0)
+                    continue;
+                memcpy(ip_return, ip, 4);
+                memcpy(mask_return, mask, 4);
+                return 1;
+            }
         }
     }
     return -1;
@@ -565,7 +601,7 @@ dhcpv4_receive()
         goto nak;
 
     if(!prefix_list_within_v4(ip, pl)) {
-        rc = generate_random_v4(ip, pl);
+        rc = generate_v4(ip, netmask, pl);
         if(rc < 0) {
             if(type == 1 || type == 3)
                 goto nak;
@@ -573,65 +609,35 @@ dhcpv4_receive()
         }
     }
 
-    rc = compute_netmask(netmask, ip, pl);
-    if(rc < 0) {
-        fprintf(stderr, "Couldn't compute DHCPv4 netmask.\n");
-        return -1;
-    }
-
     dns = all_dns(0);
 
     switch(type) {
-    case 1: {                   /* DHCPDISCOVER */
+    case 1:                     /* DHCPDISCOVER */
+    case 3: {                   /* DHCPREQUEST */
         struct lease *lease = find_lease(ip, 1);
-        if(lease && lease_match(cid, cidlen, chaddr, lease)) {
-            lease->ifindex = ifindex;
-            lease->end = now.tv_sec;
-            free(cid);
-        } else if(lease && lease->end < now.tv_sec) {
-            memcpy(lease->chaddr, chaddr, 16);
-            free(lease->cid);
-            lease->cidlen = cidlen;
-            lease->cid = cid;
-            lease->ifindex = ifindex;
-            lease->end = now.tv_sec;
-        } else {
+        if(lease && !lease_match(cid, cidlen, chaddr, lease) &&
+           lease->end >= now.tv_sec) {
             unsigned char newip[4];
-            rc = generate_random_v4(newip, pl);
+            rc = generate_v4(newip, netmask, pl);
             if(rc < 0)
-                return 0;
+                goto nak;
             if(lease)
                 flush_lease(lease);
             lease = find_lease(newip, 1);
             if(lease == NULL)
                 goto nak;
-            memcpy(lease->chaddr, chaddr, 16);
-            free(lease->cid);
-            lease->cidlen = cidlen;
-            lease->cid = cid;
-            lease->ifindex = ifindex;
-            lease->end = now.tv_sec;
         }
+        memcpy(lease->chaddr, chaddr, 16);
+        lease->ifindex = ifindex;
+        lease->end = type == 1 ? now.tv_sec : now.tv_sec + LEASE_TIME + 10;
+        free(lease->cid);
+        lease->cidlen = cidlen;
+        lease->cid = cid;
 
-        rc = dhcpv4_send(dhcpv4_socket, 2, xid, chaddr, myaddr,
+        rc = dhcpv4_send(dhcpv4_socket, type == 1 ? 2 : 5, xid, chaddr, myaddr,
                          lease->ip, ifindex, netmask, dns, LEASE_TIME);
         if(rc < 0)
             perror("dhcpv4_send");
-        break;
-    }
-    case 3: {                   /* DHCPREQUEST */
-        struct lease *lease = find_lease(ip, 0);
-        if(lease && lease_match(cid, cidlen, chaddr, lease)) {
-            lease->ifindex = ifindex;
-            lease->end = now.tv_sec + LEASE_TIME;
-            rc = dhcpv4_send(dhcpv4_socket, 5, xid, chaddr, myaddr,
-                             lease->ip, ifindex, netmask, dns,
-                             lease->end - now.tv_sec - 5 - random() % 5);
-            if(rc < 0)
-                perror("dhcpv4_send");
-        } else {
-            goto nak;
-        }
         break;
     }
     case 4:                     /* DHCPDECLINE */
