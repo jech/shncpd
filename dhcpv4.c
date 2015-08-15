@@ -121,10 +121,24 @@ find_matching_lease(const unsigned char *cid, int cidlen,
 int
 interface_dhcpv4(struct interface *interface)
 {
-    /* XXX -- this should depend on election results. */
+    int i;
+
     if(!serve_dhcpv4 || !is_a_router())
         return 0;
 
+    for(i = 0; i < numneighs; i++) {
+        if(neighs[i].interface == interface) {
+            struct node *node = find_node(neighs[i].id, 0);
+            if(node == NULL)
+                continue;
+            if((node->capabilities[1] & 0x0F) > 4)
+                return 0;
+            if(memcmp(node->capabilities, "\0\4", 2) > 0)
+                return 0;
+            if(memcmp(node->id, myid, 4) > 0)
+                return 0;
+        }
+    }
     return 1;
 }
 
