@@ -380,7 +380,7 @@ generate_random_v4(unsigned char *ip, const struct prefix_list *pl)
 
     for(i = 0; i < pl->numprefixes; i++) {
         int j = (start + i) % pl->numprefixes;
-        if(prefix_v4(&pl->prefixes[j]) && pl->prefixes[j].plen <= 30) {
+        if(prefix_v4(&pl->prefixes[j]) && pl->prefixes[j].plen <= 126) {
             rc = random_prefix(&p, 128, 0, 0, &pl->prefixes[j], NULL);
             if(rc >= 0) {
                 memcpy(ip, (unsigned char*)&p.p + 12, 4);
