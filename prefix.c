@@ -370,15 +370,18 @@ prefix_v4(struct prefix *p)
 int
 generate_random_v4(unsigned char *ip, const struct prefix_list *pl)
 {
-    int i, rc;
+    int start, i, rc;
     struct prefix p;
 
     if(pl == NULL)
         return -1;
 
+    start = random() % pl->numprefixes;
+
     for(i = 0; i < pl->numprefixes; i++) {
-        if(prefix_v4(&pl->prefixes[i])) {
-            rc = random_prefix(&p, 128, 0, 0, &pl->prefixes[i], NULL);
+        int j = (start + i) % pl->numprefixes;
+        if(prefix_v4(&pl->prefixes[j]) && pl->prefixes[j].plen <= 30) {
+            rc = random_prefix(&p, 128, 0, 0, &pl->prefixes[j], NULL);
             if(rc >= 0) {
                 memcpy(ip, (unsigned char*)&p.p + 12, 4);
                 return 1;
