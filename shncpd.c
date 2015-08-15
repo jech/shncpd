@@ -65,8 +65,8 @@ struct timespec check_time = {0, 0};
 struct timespec prefix_assignment_time = {0, 0};
 
 int debug_level = 0;
-int send_router_advertisements = 1;
-int send_dhcpv4 = 1;
+int serve_ra = 1;
+int serve_dhcpv4 = 1;
 int was_a_router = 0;
 
 int
@@ -306,10 +306,10 @@ main(int argc, char **argv)
             debug_level = atoi(optarg);
             break;
         case 'R':
-            send_router_advertisements = 0;
+            serve_ra = 0;
             break;
         case 'D':
-            send_dhcpv4 = 0;
+            serve_dhcpv4 = 0;
             break;
         default:
             goto usage;
@@ -382,13 +382,13 @@ main(int argc, char **argv)
 
     check_routing();
 
-    if(send_router_advertisements) {
+    if(serve_ra) {
         rc = ra_setup();
         if(rc < 0)
             perror("Couldn't initialise RA.\n");
     }
 
-    if(send_dhcpv4) {
+    if(serve_dhcpv4) {
         rc = dhcpv4_setup();
         if(rc < 0)
             perror("Couldn't initialise DHCPv4.\n");
@@ -598,7 +598,7 @@ main(int argc, char **argv)
     fail2:
         flushbuf();
 
-        if(send_router_advertisements) {
+        if(ra_socket >= 0) {
             if(FD_ISSET(ra_socket, &readfds)) {
                 router_advertisement(1);
             } else {
@@ -611,7 +611,7 @@ main(int argc, char **argv)
             }
         }
 
-        if(send_dhcpv4) {
+        if(dhcpv4_socket >= 0) {
             if(FD_ISSET(dhcpv4_socket, &readfds)) {
                 dhcpv4_receive();
             }

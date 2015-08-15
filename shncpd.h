@@ -34,5 +34,5 @@ extern int protocol_socket;
 extern int protocol_socket;
 extern int debug_level;
 
-extern int send_ra, send_dhcpv4;
+extern int serve_ra, serve_dhcpv4;
 extern int is_a_router(void);
