@@ -449,8 +449,11 @@ main(int argc, char **argv)
 
         if(dumping) {
             int i, j;
+            printf("Node %s%s\n", format_32(myid),
+                   is_a_router() ? " (router)" : "");
             for(i = 0; i < numinterfaces; i++) {
-                printf("Interface %s\n", interfaces[i].ifname);
+                printf("Interface %s%s\n", interfaces[i].ifname,
+                       interface_dhcpv4(&interfaces[i])? " (DHCPv4)" : "");
                 for(j = 0; j < interfaces[i].numassigned; j++) {
                     char d[INET6_ADDRSTRLEN], a[INET6_ADDRSTRLEN];
                     struct assigned_prefix *ap = &interfaces[i].assigned[j];

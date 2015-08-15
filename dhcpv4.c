@@ -106,6 +106,16 @@ lease_match(const unsigned char *cid, int cidlen,
 }
 
 int
+interface_dhcpv4(struct interface *interface)
+{
+    /* XXX -- this should depend on election results. */
+    if(!serve_dhcpv4 || !is_a_router())
+        return 0;
+
+    return 1;
+}
+
+int
 setup_dhcpv4_socket()
 {
     int s, rc, one = 1;
@@ -551,11 +561,8 @@ dhcpv4_receive()
 
     debugf("\n");
 
-    if(!is_a_router()) {
-        if(type == 1 || type == 3)
-            goto nak;
-        return 0;
-    }
+    if(!interface_dhcpv4(interface))
+        goto nak;
 
     if(!prefix_list_within_v4(ip, pl)) {
         rc = generate_random_v4(ip, pl);

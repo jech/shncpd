@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 extern int dhcpv4_socket;
 
+int interface_dhcpv4(struct interface *interface);
 int dhcpv4_setup(void);
 int dhcpv4_receive(void);
 void dhcpv4_cleanup(void);
