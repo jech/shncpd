@@ -618,6 +618,8 @@ dhcpv4_receive()
         if(lease && !lease_match(cid, cidlen, chaddr, lease) &&
            lease->end >= now.tv_sec) {
             unsigned char newip[4];
+            if(type == 3)
+                goto nak;
             rc = generate_v4(newip, netmask, pl);
             if(rc < 0)
                 goto nak;
