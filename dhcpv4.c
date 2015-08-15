@@ -187,12 +187,12 @@ dhcpv4_cleanup()
 static int
 dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
              unsigned char *xid_return, unsigned char *chaddr_return,
-             unsigned char *ip_return,
+             unsigned char *ip_return, unsigned char *sid_return,
              unsigned char **cid_return, int *cidlen_return,
              unsigned char **uc_return, int *uclen_return)
 {
     int i = 0;
-    unsigned char xid[4] = {0}, chaddr[16] = {0}, ip[4] = {0};
+    unsigned char xid[4] = {0}, chaddr[16] = {0}, ip[4] = {0}, sid[4] = {0};
     unsigned char *cid = NULL, *uc = NULL;
     int dhcp_type = -1, cidlen = 0, uclen = 0;
 
@@ -287,6 +287,11 @@ dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
                 goto fail;
             dhcp_type = tlv[2];
             break;
+        case 54:
+            if(bodylen != 4)
+                goto fail;
+            memcpy(sid, tlv + 2, 4);
+            break;
         case 61:
             cid = malloc(bodylen);
             if(cid == NULL)
@@ -320,6 +325,8 @@ dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
         memcpy(xid_return, xid, 4);
     if(ip_return)
         memcpy(ip_return, ip, 4);
+    if(sid_return)
+        memcpy(sid_return, sid, 4);
     if(cid_return)
         *cid_return = cid;
     else
@@ -513,7 +520,7 @@ dhcpv4_receive()
     int bufsiz = 1500;
     unsigned char buf[bufsiz];
     int type;
-    unsigned char xid[4], chaddr[16], ip[4], myaddr[4];
+    unsigned char xid[4], chaddr[16], ip[4], sid[4], myaddr[4];
     unsigned char *cid, *uc;
     int cidlen, uclen;
     struct interface *interface;
@@ -583,14 +590,15 @@ dhcpv4_receive()
         return -1;
 
     rc = dhcpv4_parse(buf, buflen, &type, xid, chaddr, ip,
-                      &cid, &cidlen, &uc, &uclen);
+                      sid, &cid, &cidlen, &uc, &uclen);
     if(rc < 0)
         return -1;
 
     debugf("   DHCPv4 (type %d) on %s", type, interface->ifname);
 
     /* XXX */
-    if(uclen == 8 && memcmp(uc, "\007HOMENET", 8) == 0) {
+    if((uclen == 8 && memcmp(uc, "\007HOMENET", 8) == 0) ||
+       (memcmp(sid, zeroes, 4) != 0 && memcmp(sid, myaddr, 4) != 0)) {
         debugf(" (ignored)\n");
         return 0;
     }
@@ -642,9 +650,10 @@ dhcpv4_receive()
             perror("dhcpv4_send");
         break;
     }
-    case 4:                     /* DHCPDECLINE */
+    case 4: {                   /* DHCPDECLINE */
         fprintf(stderr, "Received DHCPDECLINE.\n");
         break;
+    }
     case 7: {                   /* DHCPRELEASE */
         struct lease *lease = find_lease(ip, 0);
         if(lease &&
