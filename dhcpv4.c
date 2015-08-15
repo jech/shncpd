@@ -376,7 +376,11 @@ dhcpv4_send(int s, int type, const unsigned char *xid,
     SHORT(0);
 
     ZEROS(4);                   /* ciaddr */
-    BYTES(ip, 4);               /* yiaddr */
+    if(ip) {
+        BYTES(ip, 4);           /* yiaddr */
+    } else {
+        ZEROS(4);
+    }
     BYTES(myaddr, 4);           /* siaddr */
     ZEROS(4);                   /* giaddr */
     BYTES(chaddr, 16);          /* chaddr */
@@ -608,7 +612,7 @@ dhcpv4_receive()
     if(!interface_dhcpv4(interface))
         goto nak;
 
-    if(!prefix_list_within_v4(ip, pl)) {
+    if(type != 8 && !prefix_list_within_v4(ip, pl)) {
         rc = generate_v4(ip, netmask, pl);
         if(rc < 0) {
             if(type == 1 || type == 3)
@@ -669,6 +673,13 @@ dhcpv4_receive()
         if(lease &&
            lease->cidlen == cidlen && memcmp(lease->cid, cid, cidlen) == 0)
             lease->end = 0;
+        break;
+    }
+    case 8: {                   /* DHCPINFORM */
+        rc = dhcpv4_send(dhcpv4_socket, 5, xid, chaddr, myaddr,
+                         NULL, ifindex, netmask, dns, LEASE_TIME);
+        if(rc < 0)
+            perror("dhcpv4_send");
         break;
     }
     }
