@@ -372,6 +372,7 @@ parse_node_state(struct node *node)
                 fprintf(stderr, "Unexpected version.\n");
                 goto fail;
             }
+            memcpy(node->capabilities, tlv + 6, 2);
             break;
         }
         case 33: {

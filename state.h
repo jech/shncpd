@@ -48,6 +48,7 @@ struct node {
     unsigned int seqno;
     struct timespec orig_time;
     /* From published node state */
+    unsigned char capabilities[2];
     struct node_neighbour *neighs;
     int numneighs;
     struct prefix_list *assigned;
