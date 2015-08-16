@@ -73,7 +73,7 @@ kernel_route(int ifindex, const char *ifname,
     char to[INET6_ADDRSTRLEN];
     char from[INET6_ADDRSTRLEN];
     char iface[20];
-    char *type = "";
+    char *type, *metric;
     char cmd[2 * INET6_ADDRSTRLEN + 80];
     int rc;
 
@@ -100,19 +100,22 @@ kernel_route(int ifindex, const char *ifname,
             return -1;
         }
         type = "";
+        metric = "";
     } else {
         iface[0] = '\0';
         type = " unreachable";
+        metric = " metric 4096";
     }
 
     if(src)
         rc = snprintf(cmd, sizeof(cmd),
-                      "ip route %s%s %s/%d from %s/%d%s proto 43",
-                      add ? "add" : "del", type,to, dlen, from, slen, iface);
+                      "ip route %s%s %s/%d%s from %s/%d%s proto 43",
+                      add ? "add" : "del", type, to, dlen, metric,
+                      from, slen, iface);
     else
         rc = snprintf(cmd, sizeof(cmd),
-                      "ip route %s%s %s/%d%s proto 43",
-                      add ? "add" : "del", type, to, dlen, iface);
+                      "ip route %s%s %s/%d%s%s proto 43",
+                      add ? "add" : "del", type, to, dlen, metric, iface);
     if(rc < 1 || rc >= sizeof(cmd)) {
         errno = ENOSPC;
         return -1;
