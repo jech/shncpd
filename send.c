@@ -186,6 +186,8 @@ int
 format_my_state(unsigned char *buf, int buflen)
 {
     int i = 0, j, k;
+    struct node *node = find_node(myid, 0);
+    int dlen, n_dns6, dns6_len, n_dns4, dns4_len;
 
     for(j = 0; j < numneighs; j++) {
         CHECK(12);
@@ -232,6 +234,77 @@ format_my_state(unsigned char *buf, int buflen)
                 BYTES(&aa->assigned_address, 16);
                 PAD();
             }
+        }
+    }
+
+    dlen = n_dns6 = n_dns4 = 0;
+    for(j = 0; j < node->numexts; j++) {
+        if(node->exts[j]->delegated) {
+            for(k = 0; k < node->exts[j]->delegated->numprefixes; k++) {
+                struct prefix *p = &node->exts[j]->delegated->prefixes[k];
+                dlen += 4 + 9 + (p->plen + 7) / 8;
+            }
+        }
+        if(node->exts[j]->dns) {
+            for(k = 0; k < node->exts[j]->dns->numprefixes; k++) {
+                struct prefix *p = &node->exts[j]->dns->prefixes[k];
+                if(!prefix_v4(p))
+                    n_dns6++;
+                else
+                    n_dns4++;
+            }
+        }
+    }
+
+    dns6_len = n_dns6 > 0 ? 4 + 4 + 16 * n_dns6 : 0;
+    dns4_len = n_dns4 > 0 ? 4 + 2 + 4 * n_dns4 : 0;
+
+    for(j = 0; j < node->numexts; j++) {
+        CHECK(4);
+        SHORT(33);
+        SHORT(dlen + (-dlen & 3) +
+              dns6_len + (-dns6_len & 3) +
+              dns4_len + (-dns4_len & 3));
+        if(node->exts[j]->delegated) {
+            for(k = 0; k < node->exts[j]->delegated->numprefixes; k++) {
+                struct prefix *p = &node->exts[j]->delegated->prefixes[k];
+                CHECK(4 + 9 + (p->plen + 7) / 8 + 4);
+                SHORT(34);
+                SHORT(9 + (p->plen + 7) / 8);
+                LONG(3600);
+                LONG(1800);
+                BYTE(p->plen);
+                BYTES(&p->p, (p->plen + 7) / 8);
+                PAD();
+            }
+        }
+        if(n_dns6 > 0) {
+            CHECK(4 + 4 + 16 * n_dns6 + 4);
+            SHORT(37);
+            SHORT(4 + 16 * n_dns6);
+            SHORT(23);
+            SHORT(16 * n_dns6);
+            for(k = 0; k < node->exts[j]->dns->numprefixes; k++) {
+                struct prefix *p = &node->exts[j]->dns->prefixes[k];
+                if(!prefix_v4(p)) {
+                    BYTES(&p->p, 16);
+                }
+            }
+            PAD();
+        }
+        if(n_dns4 > 0) {
+            CHECK(4 + 2 + 4 * n_dns4 + 4);
+            SHORT(38);
+            SHORT(2 + 4 * n_dns4);
+            BYTE(6);
+            BYTE(4 * n_dns4);
+            for(k = 0; k < node->exts[j]->dns->numprefixes; k++) {
+                struct prefix *p = &node->exts[j]->dns->prefixes[k];
+                if(prefix_v4(p)) {
+                    BYTES((unsigned char*)&p->p + 12, 4);
+                }
+            }
+            PAD();
         }
     }
 
