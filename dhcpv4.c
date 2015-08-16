@@ -37,7 +37,11 @@ THE SOFTWARE.
 #include "prefix.h"
 #include "util.h"
 
-#define LEASE_TIME 600
+/* Yes, this is an unusual combination. */
+
+#define RENEW_TIME 240
+#define REBIND_TIME 300
+#define LEASE_TIME 1800
 
 int dhcpv4_socket = -1;
 
@@ -403,7 +407,7 @@ dhcpv4_send(int s, int type, const unsigned char *xid,
     SHORT(0);
 
     ZEROS(4);                   /* ciaddr */
-    if(ip) {
+    if(ip && lease_time >= 20) {
         BYTES(ip, 4);           /* yiaddr */
     } else {
         ZEROS(4);
@@ -427,7 +431,7 @@ dhcpv4_send(int s, int type, const unsigned char *xid,
     BYTE(4);
     BYTES(myaddr, 4);
 
-    if(lease_time) {
+    if(lease_time >= 20) {
         CHECK(6);
         BYTE(51);               /* IP Address Lease Time */
         BYTE(4);
@@ -436,12 +440,12 @@ dhcpv4_send(int s, int type, const unsigned char *xid,
         CHECK(6);
         BYTE(58);               /* T1 */
         BYTE(4);
-        LONG(lease_time / 2);
+        LONG(min(RENEW_TIME, lease_time - 10));
 
         CHECK(6);
         BYTE(59);               /* T2 */
         BYTE(4);
-        LONG(lease_time * 3 / 4);
+        LONG(min(REBIND_TIME, lease_time - 15));
     }
 
     if(netmask) {
