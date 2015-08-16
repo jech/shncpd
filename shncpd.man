@@ -34,7 +34,7 @@ advertisements are sent if we are a router.
 .TP
 .B \-D
 Disable the DHCPv4 server.  By default, the DHCPv4 server is enabled if we
-are a router.
+win the election, even if we are not acting as a router.
 .SH SIGNALS
 .TP
 .B SIGUSR1

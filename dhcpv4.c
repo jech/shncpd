@@ -123,7 +123,7 @@ interface_dhcpv4(struct interface *interface)
 {
     int i;
 
-    if(!serve_dhcpv4 || !is_a_router())
+    if(!serve_dhcpv4)
         return 0;
 
     for(i = 0; i < numneighs; i++) {
