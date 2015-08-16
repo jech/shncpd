@@ -289,7 +289,7 @@ main(int argc, char **argv)
     unsigned char *recvbuf = NULL;
 
     while(1) {
-        opt = getopt(argc, argv, "m:p:d:R");
+        opt = getopt(argc, argv, "m:p:d:RD");
         if(opt < 0)
             break;
 
