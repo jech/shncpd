@@ -103,7 +103,7 @@ static int
 lease_match(const unsigned char *cid, int cidlen,
             const unsigned char *chaddr, const struct lease *lease)
 {
-    if(cidlen > 0)
+    if(cidlen > 0 || lease->cidlen > 0)
         return lease->cidlen == cidlen && memcmp(lease->cid, cid, cidlen) == 0;
     else
         return memcmp(chaddr, lease->chaddr, 16) == 0;
