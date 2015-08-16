@@ -47,6 +47,7 @@ struct assigned_prefix {
 };
 
 struct interface;
+struct external;
 
 void debug_address(const struct in6_addr *a);
 void debug_prefix(const struct prefix *p);
