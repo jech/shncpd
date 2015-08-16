@@ -500,6 +500,10 @@ compute_netmask(unsigned char *mask,
 {
     int i;
     unsigned int m;
+
+    if(pl == NULL)
+        return -1;
+
     for(i = 0; i < pl->numprefixes; i++) {
         if(prefix_within_v4(ip, &pl->prefixes[i])) {
             int plen;
