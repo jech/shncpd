@@ -34,6 +34,9 @@ THE SOFTWARE.
 #include "util.h"
 #include "kernel.h"
 
+static const unsigned char v4prefix[16] =
+    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
+
 void
 debug_address(const struct in6_addr *a)
 {
@@ -63,6 +66,50 @@ debug_prefix_list(const struct prefix_list *pl)
         if(i < pl->numprefixes - 1)
             debugf(" ");
     }
+}
+
+int
+parse_prefix(const char *string, struct prefix *p)
+{
+    char buf[INET6_ADDRSTRLEN];
+    int rc, plen;
+    char *slash;
+    struct in_addr ina;
+    struct in6_addr ina6;
+
+    memset(p, 0, sizeof(struct prefix));
+
+    if(strcmp(string, "default") == 0) {
+        return 1;
+    }
+
+    strncpy(buf, string, INET6_ADDRSTRLEN);
+    buf[INET6_ADDRSTRLEN - 1] = '\0';
+
+    slash = strchr(buf, '/');
+    if(slash == NULL) {
+        plen = -1;
+    } else {
+        char *end;
+        plen = strtol(slash + 1, &end, 0);
+        if(*end != '\0' || plen < 0 || plen > 128)
+            return -1;
+        *slash = '\0';
+    }
+
+    rc = inet_pton(AF_INET, buf, &ina);
+    if(rc > 0) {
+        memcpy(&p->p, v4prefix, 12);
+        memcpy((char*)&p->p + 12, &ina, 4);
+        p->plen = plen < 0 ? 128 : plen + 96;
+    } else {
+        rc = inet_pton(AF_INET6, buf, &ina6);
+        if(rc < 1)
+            return -1;
+        memcpy(&p->p, &ina6, 16);
+        p->plen = plen < 0 ? 128 : plen;
+    }
+    return 1;
 }
 
 struct prefix_list *
@@ -204,9 +251,6 @@ prefix_within(const struct prefix *p, const struct prefix *q)
 
     return 0;
 }
-
-static const unsigned char v4prefix[16] =
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
 
 int
 prefix_within_v4(const unsigned char *p4, const struct prefix *q)

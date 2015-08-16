@@ -51,6 +51,7 @@ struct interface;
 void debug_address(const struct in6_addr *a);
 void debug_prefix(const struct prefix *p);
 void debug_prefix_list(const struct prefix_list *pl);
+int parse_prefix(const char *string, struct prefix *p);
 struct prefix_list *create_prefix_list(void);
 void destroy_prefix_list(struct prefix_list *pl);
 struct prefix_list *

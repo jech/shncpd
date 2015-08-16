@@ -271,7 +271,7 @@ parse_packet(const unsigned char *buf, int buflen,
 }
 
 static void
-parse_prefix(struct in6_addr *a, const unsigned char *p, int plen)
+parse_pref(struct in6_addr *a, const unsigned char *p, int plen)
 {
     unsigned char b[16];
     memset(b, 0, 16);
@@ -413,7 +413,7 @@ parse_node_state(struct node *node)
                 break;
             }
             prio = tlv[8] & 0x0F;
-            parse_prefix(&addr, tlv + 10, plen);
+            parse_pref(&addr, tlv + 10, plen);
             debugf("     ASSIGNED-PREFIX ");
             debug_address(&addr);
             debugf("/%d (%d, prio=%d)\n", plen, eid, prio);
@@ -511,7 +511,7 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
                 fprintf(stderr, "Truncated DELEGATED-PREFIX.\n");
                 break;
             }
-            parse_prefix(&addr, tlv + 13, plen);
+            parse_pref(&addr, tlv + 13, plen);
             debugf("       DELEGATED-PREFIX ");
             debug_address(&addr);
             debugf("/%d\n", plen);
