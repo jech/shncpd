@@ -646,8 +646,8 @@ destroy_assigned(struct interface *interface, struct assigned_prefix *ap)
 
         assert(ap->assigned.plen > 0);
         if(interface->ifindex > 0)
-            kernel_apply(interface->ifindex, interface->ifname,
-                         &ap->assigned.p, ap->assigned.plen, 0);
+            kernel_route(interface->ifindex, interface->ifname,
+                         &ap->assigned.p, ap->assigned.plen, NULL, 0, 0);
         ap->applied = 0;
         ra_retract(&ap->assigned);
         schedule_ra(NULL, 1, 0);
@@ -904,8 +904,9 @@ prefix_assignment(int changed, int *republish_return)
                 debugf("Adding prefix ");
                 debug_prefix(&ap->assigned);
                 debugf(" to interface %s.\n", interfaces[i].ifname);
-                rc = kernel_apply(interfaces[i].ifindex, interfaces[i].ifname,
-                                  &ap->assigned.p, ap->assigned.plen, 1);
+                rc = kernel_route(interfaces[i].ifindex, interfaces[i].ifname,
+                                  &ap->assigned.p, ap->assigned.plen,
+                                  NULL, 0, 1);
                 if(rc >= 0) {
                     ap->applied = 1;
                     republish = 1;

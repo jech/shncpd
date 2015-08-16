@@ -23,7 +23,8 @@ THE SOFTWARE.
 int kernel_address(int ifindex, const char *ifname,
                    const struct in6_addr *address, int plen,
                    int add);
-int kernel_apply(int ifindex, const char *ifname,
-                 const struct in6_addr *prefix, int plen,
+int kernel_route(int ifindex, const char *ifname,
+                 const struct in6_addr *src, int slen,
+                 const struct in6_addr *dest, int dlen,
                  int add);
 int kernel_router();

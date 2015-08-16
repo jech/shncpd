@@ -65,29 +65,60 @@ kernel_address(int ifindex, const char *ifname,
 }
 
 int
-kernel_apply(int ifindex, const char *ifname,
-             const struct in6_addr *prefix, int plen,
+kernel_route(int ifindex, const char *ifname,
+             const struct in6_addr *dest, int dlen,
+             const struct in6_addr *src, int slen,
              int add)
 {
-    char b[INET6_ADDRSTRLEN];
-    char c[INET6_ADDRSTRLEN + 80];
+    char to[INET6_ADDRSTRLEN];
+    char from[INET6_ADDRSTRLEN];
+    char iface[20];
+    char *type = "";
+    char cmd[2 * INET6_ADDRSTRLEN + 80];
     int rc;
 
-    if(memcmp(prefix, v4prefix, 12) == 0) {
-        inet_ntop(AF_INET, (char*)prefix + 12, b, sizeof(b));
-        plen -= 96;
+    if(memcmp(dest, v4prefix, 12) == 0) {
+        inet_ntop(AF_INET, (char*)dest + 12, to, sizeof(to));
+        dlen -= 96;
     } else {
-        inet_ntop(AF_INET6, prefix, b, sizeof(b));
+        inet_ntop(AF_INET6, dest, to, sizeof(to));
     }
 
-    rc = snprintf(c, sizeof(c), "ip route %s %s/%d dev %s proto 43",
-                  add ? "add" : "del", b, plen, ifname);
-    if(rc < 1 || rc >= sizeof(c)) {
+    if(src) {
+        if(memcmp(src, v4prefix, 12) == 0) {
+            errno = ENOSYS;
+            return -1;
+        } else {
+            inet_ntop(AF_INET6, src, from, sizeof(from));
+        }
+    }
+
+    if(ifname) {
+        rc = snprintf(iface, sizeof(iface), " dev %s", ifname);
+        if(rc < 1 || rc >= sizeof(iface)) {
+            errno = ENOSPC;
+            return -1;
+        }
+        type = "";
+    } else {
+        iface[0] = '\0';
+        type = " unreachable";
+    }
+
+    if(src)
+        rc = snprintf(cmd, sizeof(cmd),
+                      "ip route %s%s %s/%d from %s/%d%s proto 43",
+                      add ? "add" : "del", type,to, dlen, from, slen, iface);
+    else
+        rc = snprintf(cmd, sizeof(cmd),
+                      "ip route %s%s %s/%d%s proto 43",
+                      add ? "add" : "del", type, to, dlen, iface);
+    if(rc < 1 || rc >= sizeof(cmd)) {
         errno = ENOSPC;
         return -1;
     }
 
-    rc = system(c);
+    rc = system(cmd);
     if(rc >= 0 && WIFEXITED(rc) && WEXITSTATUS(rc) == 0)
         return 1;
 
