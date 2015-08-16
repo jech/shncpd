@@ -287,9 +287,10 @@ main(int argc, char **argv)
     unsigned int seed;
     struct node *node;
     unsigned char *recvbuf = NULL;
+    struct external *external = NULL;
 
     while(1) {
-        opt = getopt(argc, argv, "m:p:d:RD");
+        opt = getopt(argc, argv, "m:p:d:RDE:N:");
         if(opt < 0)
             break;
 
@@ -311,6 +312,35 @@ main(int argc, char **argv)
         case 'D':
             serve_dhcpv4 = 0;
             break;
+        case 'E':
+        case 'N': {
+            struct prefix p;
+            struct prefix_list *pl;
+            rc = parse_prefix(optarg, &p);
+            if(rc < 0)
+                goto usage;
+            if(opt == 'N' && p.plen != 128)
+                goto usage;
+            if(external == NULL)
+                external = calloc(1, sizeof(struct external));
+            if(external == NULL) {
+                perror("alloc(external)");
+                goto fail;
+            }
+            pl = prefix_list_cons_prefix(opt == 'E' ?
+                                         external->delegated :
+                                         external->dns,
+                                         &p);
+            if(pl == NULL) {
+                perror("alloc(delegated)");
+                goto fail;
+            }
+            if(opt == 'E')
+                external->delegated = pl;
+            else
+                external->dns = pl;
+            break;
+        }
         default:
             goto usage;
         }
@@ -350,6 +380,17 @@ main(int argc, char **argv)
         exit(1);
     }
 
+    if(external) {
+        node->exts = calloc(1, sizeof(struct external *));
+        if(node->exts == NULL) {
+            perror("alloc(exts)");
+            goto fail;
+        }
+        node->exts[0] = external;
+        node->numexts = 1;
+    }
+
+    prefix_assignment(1, NULL);
     rc = republish(1, 0);
     if(rc < 0) {
         fprintf(stderr, "Couldn't compute myself.\n");
@@ -368,6 +409,10 @@ main(int argc, char **argv)
         perror("hn_socket");
         goto fail;
     }
+
+    rc = route_externals(node->exts, node->numexts, 1);
+    if(rc < 0)
+        perror("Route externals");
 
     for(i = 0; i < numinterfaces; i++) {
         trickle_init(&interfaces[i].trickle, HNCP_I_min, HNCP_I_max, 1);
@@ -624,12 +669,14 @@ main(int argc, char **argv)
     ra_cleanup();
     dhcpv4_cleanup();
     prefix_assignment_cleanup();
+    route_externals(node->exts, node->numexts, 0);
 
     return 0;
 
  usage:
     fprintf(stderr,
-            "shcpd [-m group] [-p port] [-d debug-level] [-R] interface...\n");
+            "shcpd [-m group] [-p port] [-d debug-level] [-R]\n"
+            "      [-E prefix]... [-N address]... interface...\n");
  fail:
     exit(1);
 }

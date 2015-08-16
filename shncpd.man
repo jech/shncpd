@@ -28,6 +28,16 @@ Useful values are
 (the default) and
 .BR 2 .
 .TP
+.BI \-E " prefix"
+Announce an externally delegated prefix over both HNCP and the routing
+protocol.  This option may be repeated multiple times.
+.TP
+.BI \-N " prefix"
+Announce a name server over HNCP.  This option may be repeated multiple
+times.
+.TP
+.BI
+.TP
 .B \-R
 Disable the router advertisement (RA) server.  By default, router
 advertisements are sent if we are a router.

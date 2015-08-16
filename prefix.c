@@ -610,6 +610,30 @@ publish_prefix(struct interface *interface, struct assigned_prefix *ap,
 }
 
 int
+route_externals(struct external **ext, int numexternals, int add)
+{
+    int i, j, rc = 1;
+    struct in6_addr def;
+    struct in6_addr v4_def;
+    memset(&def, 0, sizeof(def));
+    memcpy(&v4_def, v4prefix, 16);
+    for(i = 0; i < numexternals; i++) {
+        for(j = 0; j < ext[i]->delegated->numprefixes; j++) {
+            struct prefix *p = &ext[i]->delegated->prefixes[j];
+            int rrc;
+            if(prefix_v4(p)) {
+                rrc = kernel_route(0, NULL, &v4_def, 96, NULL, 0, add);
+            } else {
+                rrc = kernel_route(0, NULL, &def, 0, &p->p, p->plen, add);
+            }
+            if(rrc < 0)
+                rc = rrc;
+        }
+    }
+    return rc;
+}
+
+int
 destroy_assigned_address(struct interface *interface,
                          struct assigned_prefix *ap)
 {
