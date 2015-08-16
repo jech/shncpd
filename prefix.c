@@ -623,8 +623,10 @@ route_externals(struct external **ext, int numexternals, int add)
             int rrc;
             if(prefix_v4(p)) {
                 rrc = kernel_route(0, NULL, &v4_def, 96, NULL, 0, add);
+                rrc = kernel_route(0, NULL, &p->p, p->plen, NULL, 0, add);
             } else {
                 rrc = kernel_route(0, NULL, &def, 0, &p->p, p->plen, add);
+                rrc = kernel_route(0, NULL, &p->p, p->plen, NULL, 0, add);
             }
             if(rrc < 0)
                 rc = rrc;
