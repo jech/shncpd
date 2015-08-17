@@ -700,7 +700,6 @@ dhcpv4_receive()
                 goto nak;
             rc = generate_v4(ip, netmask, pl);
             lease = find_lease(ip, 1);
-            assert(lease->ifindex == 0);
         } else {
             rc = compute_netmask(netmask, lease->ip, pl);
             if(rc < 0)
