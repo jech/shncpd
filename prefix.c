@@ -319,7 +319,9 @@ prefix_list_overlap(const struct prefix *p, const struct prefix_list *pl,
         int plen = min(p->plen, q->plen);
         unsigned char qq[16];
 
-        if(respect_precedence && prefix_takes_precedence(p, q))
+        if(respect_precedence &&
+           ((id_eq(p->id, q->id) && p->eid == q->eid) ||
+            prefix_takes_precedence(p, q)))
             continue;
 
         memcpy(qq, &q->p, 16);
