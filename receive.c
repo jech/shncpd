@@ -261,9 +261,10 @@ parse_packet(const unsigned char *buf, int buflen,
 
  done:
     if(recompute) {
-        int r;
+        int r, msecs;
         silly_walk(find_node(myid, 0));
-        prefix_assignment(1, &r);
+        msecs = prefix_assignment(1, &r);
+        ts_add_msec(&prefix_assignment_time, &now, msecs);
         if(r)
             republish(0, 1);
     }

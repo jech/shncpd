@@ -27,6 +27,7 @@ THE SOFTWARE.
 #define DNCP_KEEPALIVE_MULTIPLIER_PERCENT 210
 
 extern unsigned char myid[4];
+extern struct timespec prefix_assignment_time;
 extern struct timespec now;
 extern struct in6_addr protocol_group;
 extern unsigned int protocol_port;

@@ -544,7 +544,9 @@ main(int argc, char **argv)
             changed = changed || rc;
             ts_add_random(&check_time, &now, 20000);
             if(changed) {
-                prefix_assignment(1, NULL);
+                int msecs;
+                msecs = prefix_assignment(1, NULL);
+                ts_add_msec(&prefix_assignment_time, &now, msecs);
                 republish(1, 1);
             }
             rescan = 0;
