@@ -699,6 +699,8 @@ dhcpv4_receive()
             if(type == 3)
                 goto nak;
             rc = generate_v4(ip, netmask, pl);
+            if(rc < 0)
+                goto nak;
             lease = find_lease(ip, 1);
         } else {
             rc = compute_netmask(netmask, lease->ip, pl);
