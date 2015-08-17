@@ -224,7 +224,8 @@ dhcpv4_cleanup()
 }
 
 static int
-dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
+dhcpv4_parse(unsigned char *buf, int buflen,
+             int *type_return, int *broadcast_return,
              unsigned char *xid_return, unsigned char *chaddr_return,
              unsigned char *ip_return, unsigned char *sid_return,
              unsigned char **cid_return, int *cidlen_return,
@@ -233,7 +234,7 @@ dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
     int i = 0;
     unsigned char xid[4] = {0}, chaddr[16] = {0}, ip[4] = {0}, sid[4] = {0};
     unsigned char *cid = NULL, *uc = NULL;
-    int dhcp_type = -1, cidlen = 0, uclen = 0;
+    int dhcp_type = -1, broadcast = 0, cidlen = 0, uclen = 0;
 
     if(buflen < 236)
         goto fail;
@@ -249,6 +250,7 @@ dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
     i += 2;
 
     /* flags */
+    broadcast = (buf[i] & 0x80) != 0;
     i += 2;
 
     /* ciaddr */
@@ -360,6 +362,8 @@ dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
  done:
     if(type_return)
         *type_return = dhcp_type;
+    if(broadcast_return)
+        *broadcast_return = broadcast;
     if(chaddr_return)
         memcpy(chaddr_return, chaddr, 16);
     if(xid_return)
@@ -391,7 +395,7 @@ dhcpv4_parse(unsigned char *buf, int buflen, int *type_return,
 #define LONG(_v) DO_HTONL(buf + i, (_v)); i += 4
 
 static int
-dhcpv4_send(int s, int type, const unsigned char *xid,
+dhcpv4_send(int s, struct sockaddr_in *to, int type, const unsigned char *xid,
             const unsigned char *chaddr, const unsigned char *myaddr,
             const unsigned char *ip, int ifindex,
             const unsigned char *netmask, struct prefix_list *dns,
@@ -402,8 +406,6 @@ dhcpv4_send(int s, int type, const unsigned char *xid,
     int i = 0;
     int rc;
     struct ifreq ifr;
-    struct sockaddr_in to;
-    const char broadcast[4] = {255, 255, 255, 255};
 
     debugf("-> DHCPv4 (type %d) on interface %d\n", type, ifindex);
 
@@ -490,12 +492,8 @@ dhcpv4_send(int s, int type, const unsigned char *xid,
     if(rc < 0)
         return -1;
 
-    memset(&to, 0, sizeof(to));
-    to.sin_family = AF_INET;
-    memcpy(&to.sin_addr, broadcast, 4);
-    to.sin_port = htons(68);
-
-    rc = sendto(dhcpv4_socket, buf, i, 0, (struct sockaddr*)&to, sizeof(to));
+    rc = sendto(dhcpv4_socket, buf, i, MSG_DONTROUTE,
+                (struct sockaddr*)to, sizeof(*to));
 
     setsockopt(dhcpv4_socket, SOL_SOCKET, SO_BINDTODEVICE, NULL, 0);
     return rc;
@@ -581,10 +579,11 @@ int
 dhcpv4_receive()
 {
     int i, rc, buflen;
-    struct sockaddr_in from;
+    const char broadcast_addr[4] = {255, 255, 255, 255};
+    struct sockaddr_in from, to;
     int bufsiz = 1500;
     unsigned char buf[bufsiz];
-    int type = -1;
+    int type = -1, broadcast;
     unsigned char xid[4], chaddr[16], ip[4], sid[4], myaddr[4];
     unsigned char *cid = NULL, *uc = NULL;
     int cidlen = 0, uclen;
@@ -654,7 +653,7 @@ dhcpv4_receive()
             pl = ppl;
     }
 
-    rc = dhcpv4_parse(buf, buflen, &type, xid, chaddr, ip,
+    rc = dhcpv4_parse(buf, buflen, &type, &broadcast, xid, chaddr, ip,
                       sid, &cid, &cidlen, &uc, &uclen);
     if(rc < 0)
         return -1;
@@ -671,6 +670,14 @@ dhcpv4_receive()
 
     if(!interface_dhcpv4(interface))
         goto done;
+
+    memset(&to, 0, sizeof(to));
+    to.sin_family = AF_INET;
+    if(broadcast || memcmp(&from.sin_addr, zeroes, 4) == 0)
+        memcpy(&to.sin_addr, broadcast_addr, 4);
+    else
+        memcpy(&to.sin_addr, &from.sin_addr, 4);
+    to.sin_port = htons(68);
 
     dns = all_dns(0);
 
@@ -719,7 +726,8 @@ dhcpv4_receive()
         lease->cid = cid;
         cid = NULL;
 
-        rc = dhcpv4_send(dhcpv4_socket, type == 1 ? 2 : 5, xid, chaddr, myaddr,
+        rc = dhcpv4_send(dhcpv4_socket, &to,
+                         type == 1 ? 2 : 5, xid, chaddr, myaddr,
                          lease->ip, ifindex, netmask, dns, LEASE_TIME);
         if(rc < 0)
             perror("dhcpv4_send");
@@ -750,7 +758,8 @@ dhcpv4_receive()
         break;
     }
     case 8: {                   /* DHCPINFORM */
-        rc = dhcpv4_send(dhcpv4_socket, 5, xid, chaddr, myaddr,
+        rc = dhcpv4_send(dhcpv4_socket, &to,
+                         5, xid, chaddr, myaddr,
                          NULL, ifindex, NULL, dns, 0);
         if(rc < 0)
             perror("dhcpv4_send");
@@ -761,7 +770,7 @@ dhcpv4_receive()
     goto done;
 
  nak:
-    dhcpv4_send(dhcpv4_socket, 6, xid, chaddr, myaddr, ip, ifindex,
+    dhcpv4_send(dhcpv4_socket, &to, 6, xid, chaddr, myaddr, ip, ifindex,
                 NULL, NULL, 0);
  done:
     free(cid);
