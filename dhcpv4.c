@@ -561,6 +561,22 @@ generate_v4(unsigned char *ip_return, unsigned char *mask_return,
     return -1;
 }
 
+static int
+user_class_match(const unsigned char *uc, int uclen, const char *s)
+{
+    int slen = strlen(s);
+    int i;
+
+    i = 0;
+    while(i + slen + 1 < uclen) {
+        int clen = uc[i];
+        if(clen == slen && memcmp(uc + i + 1, s, slen) == 0)
+            return 1;
+        i += clen + 1;
+    }
+    return 0;
+}
+
 int
 dhcpv4_receive()
 {
@@ -645,8 +661,7 @@ dhcpv4_receive()
 
     debugf("   DHCPv4 (type %d) on %s", type, interface->ifname);
 
-    /* XXX */
-    if((uclen == 8 && memcmp(uc, "\007HOMENET", 8) == 0) ||
+    if(user_class_match(uc, uclen, "HOMENET") ||
        (memcmp(sid, zeroes, 4) != 0 && memcmp(sid, myaddr, 4) != 0)) {
         debugf(" (ignored)\n");
         goto done;
