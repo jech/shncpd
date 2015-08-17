@@ -285,17 +285,43 @@ recv_rs()
     int buflen = 1500, rc;
     unsigned char buf[buflen];
     struct sockaddr_in6 from;
-    socklen_t fromlen = sizeof(from);
     struct interface *interface;
+    struct iovec iov[1];
+    struct msghdr msg;
+    int cmsglen = 100;
+    char cmsgbuf[100];
+    struct cmsghdr *cmsg = (struct cmsghdr*)cmsgbuf;
+    int hoplimit = -1;
 
-    rc = recvfrom(ra_socket, buf, buflen, 0, (struct sockaddr*)&from, &fromlen);
+    iov[0].iov_base = buf;
+    iov[0].iov_len = buflen;
+    memset(&msg, 0, sizeof(msg));
+    msg.msg_name = &from;
+    msg.msg_namelen = sizeof(from);
+    msg.msg_iov = iov;
+    msg.msg_iovlen = 1;
+    msg.msg_control = cmsg;
+    msg.msg_controllen = cmsglen;
+
+    rc = recvmsg(ra_socket, &msg, 0);
     if(rc < 0)
         return rc;
 
-    if(fromlen < sizeof(struct sockaddr_in6) || from.sin6_family != AF_INET6)
+    if(msg.msg_namelen < sizeof(struct sockaddr_in6) ||
+       from.sin6_family != AF_INET6)
         return 0;
 
-    /* XXX verify hop limit. */
+    cmsg = CMSG_FIRSTHDR(&msg);
+    while(cmsg != NULL) {
+        if ((cmsg->cmsg_level == IPPROTO_IPV6) &&
+            (cmsg->cmsg_type == IPV6_HOPLIMIT)) {
+            hoplimit = *(unsigned char*)CMSG_DATA(cmsg);
+            break;
+        }
+    }
+
+    if(hoplimit != 255)
+        return 0;
 
     if(rc < 8)
         return 0;
