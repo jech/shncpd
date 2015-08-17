@@ -62,6 +62,7 @@ int protocol_socket;
 unsigned char myid[4];
 
 struct timespec check_time = {0, 0};
+struct timespec republish_time = {0, 0};
 struct timespec prefix_assignment_time = {0, 0};
 
 int debug_level = 0;
@@ -550,6 +551,10 @@ main(int argc, char **argv)
                 republish(1, 1);
             }
             rescan = 0;
+        }
+
+        if(ts_compare(&now, &republish_time) > 0) {
+            republish(0, 0);
         }
 
         for(i = 0; i < numinterfaces; i++) {

@@ -307,6 +307,8 @@ republish(int do_neighs, int reset)
     if(reset)
         trickle_reset_all();
 
+    ts_add_random(&republish_time, &now, 1800000);
+
     return 1;
 }
 
