@@ -1,7 +1,20 @@
 shncpd -- the simple, stupid and slow HNCP daemon
 =================================================
 
-shncpd is an implementation of the Home Networking Control Protocol.
+shncpd is an implementation of the Home Networking Control Protocol (HNCP)
+and associated protocols.  It currently implements:
+
+  * DNCP flooding;
+  * prefix and address assignment;
+  * prefix delegation (manually configured);
+  * router advertisement server;
+  * DHCPv4 server.
+
+It does not implement routing itself, but relies on babeld.
+
+
+Compiling
+---------
 
 Compile with one of the following:
 
@@ -15,20 +28,26 @@ or
 
     make EXTRA_DEFINES=-DUSE_OPENSSL LDLIBS=-lcrypto
 
-To run, pass the list of interfaces on the command line:
 
-    shncpd eth0 wlan0
+Running
+-------
 
-or
-
-    shncpd -d2 eth0 wlan0
-
-In order to announce routes to the locally applied prefixes over Babel,
-redistribute protocol 43:
+First, run babeld and tell it to redistribute protocol 43:
 
     babeld -C 'redistribute local deny' \
            -C 'redistribute proto 43 allow' \
            eth0 wlan0
 
-Shncpd will automatically detect that we are acting as a router, and
-start sending RAs and acting as a DHCPv4 server.
+Then, run shncpd, passing the list of (internal) Homenet interfaces on the
+command line:
+
+    shncpd eth0 wlan0
+
+In order to announce delegated prefixes and name servers, use the -E
+and -N flags:
+
+    shncpd -E 2001:db8:42::/48 -N 2001:db8:42::53 \
+           -E 10.0.0.0/8 \
+           eth0 wlan0
+
+There is a manual page -- if everything else fails, read the documentation.

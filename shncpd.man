@@ -10,7 +10,29 @@ shncpd \- the simple, stupid and slow HNCP daemon
 .IR interface ...
 .SH DESCRIPTION
 .B Shncpd
-is a standalone implementation of the Home Networking Control Protocol.
+is a standalone implementation of a useful subset of the Homenet protocol
+stack.  It implements:
+.IP \[bu] 2
+DNCP flooding;
+.IP \[bu]
+prefix and address assignment;
+.IP \[bu]
+prefix delegation (manually configured);
+.IP \[bu]
+a router advertisement server;
+.IP \[bu]
+a DHCPv4 server.
+.RE
+
+.B Shncpd
+does not do routing itself, but relies on
+.BR babeld .
+
+Before running
+.BR shncpd ,
+you should start an instance of
+.B babeld
+with redistribution of protocol 43 enabled.
 .SH OPTIONS
 .TP
 .BI \-m " multicast-address"
