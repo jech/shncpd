@@ -730,7 +730,7 @@ dhcpv4_receive()
     case 7: {                   /* DHCPRELEASE */
         struct lease *lease = find_matching_lease(cid, cidlen, chaddr, NULL);
         if(lease)
-            lease->end = 0;
+            lease->end = now.tv_sec;
         break;
     }
     case 8: {                   /* DHCPINFORM */
