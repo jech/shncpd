@@ -770,8 +770,9 @@ dhcpv4_receive()
     goto done;
 
  nak:
-    dhcpv4_send(dhcpv4_socket, &to, 6, xid, chaddr, myaddr, ip, ifindex,
-                NULL, NULL, 0);
+    if(type == 3)
+        dhcpv4_send(dhcpv4_socket, &to, 6, xid, chaddr, myaddr, ip, ifindex,
+                    NULL, NULL, 0);
  done:
     free(cid);
     free(uc);
