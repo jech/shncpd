@@ -904,7 +904,7 @@ prefix_assignment(int changed, int *republish_return)
     }
 
     again = now;
-    again.tv_sec += 600;
+    again.tv_sec += 120;
 
     for(i = 0; i < numinterfaces; i++) {
         for(j = 0; j < interfaces[i].numassigned; j++) {
