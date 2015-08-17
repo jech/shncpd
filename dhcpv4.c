@@ -687,8 +687,11 @@ dhcpv4_receive()
         struct lease *lease = NULL;
         int have_ip = memcmp(ip, zeroes, 4) != 0;
 
-        if(type == 1 || !have_ip)
+        if(type != 3 || !have_ip) {
             lease = find_matching_lease(cid, cidlen, chaddr, pl);
+            if(!prefix_list_within_v4(ip, pl))
+                lease = NULL;
+        }
 
         if(lease == NULL && have_ip) {
             if(prefix_list_within_v4(ip, pl)) {
@@ -715,7 +718,7 @@ dhcpv4_receive()
                 goto nak;
         }
 
-        if(!lease)
+        if(lease == NULL)
             goto nak;
 
         memcpy(lease->chaddr, chaddr, 16);
