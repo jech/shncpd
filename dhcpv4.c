@@ -643,11 +643,8 @@ dhcpv4_receive()
 
     interface = ifindex > 0 ? find_interface(ifindex) : NULL;
 
-    if(interface == NULL) {
-        fprintf(stderr,
-                "Couldn't find interface for IPv4 request (%d).\n", ifindex);
+    if(interface == NULL)
         return -1;
-    }
 
     rc = interface_v4(interface, myaddr);
     if(rc <= 0) {
