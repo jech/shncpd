@@ -299,7 +299,7 @@ republish(int do_neighs, int reset)
         node->numneighs = numneighs;
     }
 
-    rc = format_my_state(buf, 2000);
+    rc = format_my_state(buf, sizeof(buf));
     if(rc < 0) {
         fprintf(stderr, "Couldn't format my state.\n");
         return -1;

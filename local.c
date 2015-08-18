@@ -40,7 +40,7 @@ char *local_script = NULL;
 static int
 set_config_var(const char *name, const struct prefix_list *pl, int v4)
 {
-    char buf[(INET6_ADDRSTRLEN + 1) * 20 ];
+    char buf[(INET6_ADDRSTRLEN + 1) * 20];
 
     if(pl && pl->prefixes > 0) {
         int i;
@@ -48,7 +48,7 @@ set_config_var(const char *name, const struct prefix_list *pl, int v4)
         for(i = 0; i < pl->numprefixes; i++) {
             char a[INET6_ADDRSTRLEN];
             if(v4)
-                inet_ntop(AF_INET, (unsigned char*)&pl->prefixes[i].p + 12,
+                inet_ntop(AF_INET, (char*)&pl->prefixes[i].p + 12,
                           a, sizeof(a));
             else
                 inet_ntop(AF_INET6, &pl->prefixes[i].p, a, sizeof(a));

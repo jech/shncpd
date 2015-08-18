@@ -44,7 +44,7 @@ format_address(const struct in6_addr *a, char *buf, int buflen)
     char *ptr;
 
     if(IN6_IS_ADDR_V4MAPPED(a))
-        ptr = (char*)inet_ntop(AF_INET, (unsigned char*)a + 12, buf, buflen);
+        ptr = (char*)inet_ntop(AF_INET, (char*)a + 12, buf, buflen);
     else
         ptr = (char*)inet_ntop(AF_INET6, a, buf, buflen);
 
@@ -62,7 +62,7 @@ format_prefix_raw(const struct in6_addr *a, int plen, char *buf, int buflen)
     int v4 = plen > 96 && IN6_IS_ADDR_V4MAPPED(a);
 
     if(v4)
-        ptr = (char*)inet_ntop(AF_INET, (unsigned char*)&a + 12,
+        ptr = (char*)inet_ntop(AF_INET, (char*)&a + 12,
                                buf, buflen);
     else
         ptr = (char*)inet_ntop(AF_INET6, a, buf, buflen);
@@ -313,7 +313,7 @@ prefix_within_v4(const unsigned char *p4, const struct prefix *q)
     struct prefix p;
     memset(&p, 0, sizeof(p));
     memcpy(&p.p, v4prefix, 12);
-    memcpy(((unsigned char*)&p.p) + 12, p4, 4);
+    memcpy((char*)&p.p + 12, p4, 4);
     p.plen = 128;
 
     return prefix_within(&p, q);
@@ -351,7 +351,7 @@ prefix_list_within_v4(const unsigned char *p4, const struct prefix_list *pl)
     struct prefix p;
     memset(&p, 0, sizeof(p));
     memcpy(&p.p, v4prefix, 12);
-    memcpy(((unsigned char*)&p.p) + 12, p4, 4);
+    memcpy((char*)&p.p + 12, p4, 4);
     p.plen = 128;
 
     return prefix_list_within(&p, pl);
@@ -500,7 +500,7 @@ interface_v4(struct interface *interface, unsigned char *v4_return)
     for(i = 0; i < interface->numassigned; i++) {
         struct in6_addr *a = &interface->assigned[i].assigned_address;
         if(IN6_IS_ADDR_V4MAPPED(a)) {
-            memcpy(v4_return, (unsigned char*)a + 12, 4);
+            memcpy(v4_return, (char*)a + 12, 4);
             return 1;
         }
     }

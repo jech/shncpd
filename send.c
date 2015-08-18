@@ -190,6 +190,8 @@ format_my_state(unsigned char *buf, int buflen)
     struct node *node = find_node(myid, 0);
     int dlen, n_dns6, dns6_len, n_dns4, dns4_len;
 
+    MEM_UNDEFINED(buf, buflen);
+
     for(j = 0; j < numneighs; j++) {
         CHECK(12);
         SHORT(8);
@@ -300,7 +302,7 @@ format_my_state(unsigned char *buf, int buflen)
             for(k = 0; k < node->exts[j]->dns->numprefixes; k++) {
                 struct prefix *p = &node->exts[j]->dns->prefixes[k];
                 if(prefix_v4(p)) {
-                    BYTES((unsigned char*)&p->p + 12, 4);
+                    BYTES((char*)&p->p + 12, 4);
                 }
             }
             PAD();

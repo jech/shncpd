@@ -132,6 +132,8 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
     unsigned char buf[buflen];
     int i = 0, j;
 
+    MEM_UNDEFINED(buf, buflen);
+
     CHECK(16);
     BYTE(134);
     BYTE(0);

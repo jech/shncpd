@@ -422,6 +422,8 @@ dhcpv4_send(int s, struct sockaddr_in *to, int type, const unsigned char *xid,
 
     debugf("-> DHCPv4 (type %d) on interface %d\n", type, ifindex);
 
+    MEM_UNDEFINED(buf, buflen);
+
     CHECK(236);
     BYTE(2);
     BYTE(1);
@@ -491,7 +493,7 @@ dhcpv4_send(int s, struct sockaddr_in *to, int type, const unsigned char *xid,
         BYTE(6);
         BYTE(4 * dns->numprefixes);
         for(j = 0; j < dns->numprefixes; j++) {
-            BYTES((unsigned char*)&dns->prefixes[j].p + 12, 4);
+            BYTES((char*)&dns->prefixes[j].p + 12, 4);
         }
     }
 
