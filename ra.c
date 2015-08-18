@@ -372,7 +372,7 @@ int
 ra_routing_change(int router)
 {
     if(router) {
-        debugf("Now a router: sending RA.");
+        debugf("Now a router: sending RA.\n");
         send_multicast_ra(NULL, 1);
     } else {
         debugf("No longer a router: retracting RA.\n");
