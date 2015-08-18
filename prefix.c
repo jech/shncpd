@@ -63,7 +63,7 @@ format_prefix_raw(const struct in6_addr *a, int plen, char *buf, int buflen)
     int v4 = plen > 96 && IN6_IS_ADDR_V4MAPPED(a);
 
     if(v4)
-        ptr = (char*)inet_ntop(AF_INET, (char*)&a + 12,
+        ptr = (char*)inet_ntop(AF_INET, (char*)a + 12,
                                buf, buflen);
     else
         ptr = (char*)inet_ntop(AF_INET6, a, buf, buflen);
