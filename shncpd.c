@@ -353,17 +353,17 @@ main(int argc, char **argv)
         }
     }
 
-    if(optind >= argc)
-        goto usage;
-
     for(i = optind; i < argc; i++) {
-        if(i - optind >= MAXINTERFACES) {
+        if(numinterfaces >= MAXINTERFACES) {
             fprintf(stderr, "Too many interfaces.\n");
             exit(1);
         }
-        interfaces[i - optind].ifname = argv[i];
+        interfaces[numinterfaces].ifname = argv[i];
+        numinterfaces++;
     }
-    numinterfaces = i - optind;
+
+    if(numinterfaces == 0)
+        goto usage;
 
     rc = inet_pton(AF_INET6, group, &protocol_group);
     if(rc <= 0)
