@@ -133,7 +133,7 @@ find_matching_lease(const unsigned char *cid, int cidlen,
 int
 interface_dhcpv4_prio(struct interface *interface)
 {
-    if(serve_dhcpv4)
+    if(serve_dhcpv4 && is_a_router())
         return 4;
     else
         return 0;

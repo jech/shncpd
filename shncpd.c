@@ -268,6 +268,7 @@ check_routing()
         debugf("Change in routing status: %d\n", is_now_a_router);
         was_a_router = is_now_a_router;
         ra_routing_change(is_now_a_router);
+        republish(0, 0);
         return 1;
     }
 
