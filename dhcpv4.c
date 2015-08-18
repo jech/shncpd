@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include <assert.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

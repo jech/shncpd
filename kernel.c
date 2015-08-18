@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "util.h"

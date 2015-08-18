@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <time.h>
 #include <assert.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
