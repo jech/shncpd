@@ -520,20 +520,19 @@ main(int argc, char **argv)
                        interface_type(&interfaces[i]),
                        interface_dhcpv4(&interfaces[i])? " (DHCPv4)" : "");
                 for(j = 0; j < interfaces[i].numassigned; j++) {
-                    char d[INET6_ADDRSTRLEN], a[INET6_ADDRSTRLEN];
+                    char d[INET6_ADDRSTRLEN + 8], a[INET6_ADDRSTRLEN + 8];
                     struct assigned_prefix *ap = &interfaces[i].assigned[j];
-                    inet_ntop(AF_INET6, &ap->delegated.p, d, sizeof(d));
-                    inet_ntop(AF_INET6, &ap->assigned.p, a, sizeof(a));
-                    printf("  Assigned %s/%d%s from %s/%d\n",
-                           a, ap->assigned.plen,
+                    format_prefix(&ap->delegated, d, sizeof(d));
+                    format_prefix(&ap->assigned, a, sizeof(a));
+                    printf("  Assigned %s%s from %s\n",
+                           a,
                            (ap->published && ap->applied) ?
                            " (published, applied)" :
                            ap->published ? " (published)" :
                            ap->applied ? " (applied)" : "",
-                           d, ap->delegated.plen);
+                           d);
                     if(!IN6_IS_ADDR_UNSPECIFIED(&ap->assigned_address)) {
-                        inet_ntop(AF_INET6, &ap->assigned_address,
-                                  a, sizeof(a));
+                        format_address(&ap->assigned_address, a, sizeof(a));
                         printf("    Address %s\n", a);
                     }
                 }

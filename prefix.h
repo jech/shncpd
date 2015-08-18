@@ -49,7 +49,12 @@ struct assigned_prefix {
 struct interface;
 struct external;
 
+char *format_address(const struct in6_addr *a, char *buf, int buflen);
+char *
+format_prefix_raw(const struct in6_addr *a, int plen, char *buf, int buflen);
+char *format_prefix(const struct prefix *p, char *buf, int buflen);
 void debug_address(const struct in6_addr *a);
+void debug_prefix_raw(const struct in6_addr *a, int plen);
 void debug_prefix(const struct prefix *p);
 void debug_prefix_list(const struct prefix_list *pl);
 int parse_prefix(const char *string, struct prefix *p);
@@ -67,7 +72,7 @@ int prefix_within_v4(const unsigned char *p4, const struct prefix *q);
 int prefix_list_within(const struct prefix *p, const struct prefix_list *pl);
 int prefix_list_within_v4(const unsigned char *p4,
                           const struct prefix_list *pl);
-int prefix_v4(struct prefix *p);
+int prefix_v4(const struct prefix *p);
 int interface_v4(struct interface *interface, unsigned char *v4_return);
 int generate_random_v4(unsigned char *ip, const struct prefix_list *pl);
 int route_externals(struct external **ext, int numexternals, int add);

@@ -23,6 +23,7 @@ THE SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <assert.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -37,20 +38,74 @@ THE SOFTWARE.
 static const unsigned char v4prefix[16] =
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
 
+char *
+format_address(const struct in6_addr *a, char *buf, int buflen)
+{
+    char *ptr;
+
+    if(IN6_IS_ADDR_V4MAPPED(a))
+        ptr = (char*)inet_ntop(AF_INET, (unsigned char*)a + 12, buf, buflen);
+    else
+        ptr = (char*)inet_ntop(AF_INET6, a, buf, buflen);
+
+    if(ptr == NULL)
+        snprintf(buf, buflen, "%s", strerror(errno));
+    buf[buflen - 1] = '\0';
+    return ptr;
+}
+
+char *
+format_prefix_raw(const struct in6_addr *a, int plen, char *buf, int buflen)
+{
+    char *ptr;
+    int len;
+    int v4 = plen > 96 && IN6_IS_ADDR_V4MAPPED(a);
+
+    if(v4)
+        ptr = (char*)inet_ntop(AF_INET, (unsigned char*)&a + 12,
+                               buf, buflen);
+    else
+        ptr = (char*)inet_ntop(AF_INET6, a, buf, buflen);
+
+    if(ptr == NULL)
+        snprintf(buf, buflen, "%s", strerror(errno));
+    buf[buflen - 1] = '\0';
+
+    len = strlen(buf);
+    snprintf(buf + len, buflen - len, "/%d", v4 ? plen - 96 : plen);
+    buf[buflen - 1] = '\0';
+
+    return ptr;
+}
+
+char *
+format_prefix(const struct prefix *p, char *buf, int buflen)
+{
+    return format_prefix_raw(&p->p, p->plen, buf, buflen);
+}
+
 void
 debug_address(const struct in6_addr *a)
 {
     char b[INET6_ADDRSTRLEN];
-    inet_ntop(AF_INET6, a, b, sizeof(b));
+    format_address(a, b, sizeof(b));
+    debugf("%s", b);
+}
+
+void
+debug_prefix_raw(const struct in6_addr *a, int plen)
+{
+    char b[INET6_ADDRSTRLEN];
+    format_prefix_raw(a, plen, b, sizeof(b));
     debugf("%s", b);
 }
 
 void
 debug_prefix(const struct prefix *p)
 {
-    char b[INET6_ADDRSTRLEN];
-    inet_ntop(AF_INET6, &p->p, b, sizeof(b));
-    debugf("%s/%d", b, p->plen);
+    char b[INET6_ADDRSTRLEN + 8];
+    format_prefix(p, b, sizeof(b));
+    debugf("%s", b);
 }
 
 void
@@ -408,7 +463,7 @@ random_prefix(struct prefix *res,
 }
 
 int
-prefix_v4(struct prefix *p)
+prefix_v4(const struct prefix *p)
 {
     return p->plen >= 96 && IN6_IS_ADDR_V4MAPPED(&p->p);
 }

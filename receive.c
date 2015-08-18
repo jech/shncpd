@@ -415,8 +415,8 @@ parse_node_state(struct node *node)
             prio = tlv[8] & 0x0F;
             parse_pref(&addr, tlv + 10, plen);
             debugf("     ASSIGNED-PREFIX ");
-            debug_address(&addr);
-            debugf("/%d (%d, prio=%d)\n", plen, eid, prio);
+            debug_prefix_raw(&addr, plen);
+            debugf(" (%d, prio=%d)\n", eid, prio);
             pl = prefix_list_cons(node->assigned,
                                   &addr, plen, node->id, eid, prio);
             if(pl)
@@ -513,8 +513,8 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
             }
             parse_pref(&addr, tlv + 13, plen);
             debugf("       DELEGATED-PREFIX ");
-            debug_address(&addr);
-            debugf("/%d\n", plen);
+            debug_prefix_raw(&addr, plen);
+            debugf("\n");
             /* XXX parse embedded TLVs. */
             pl = prefix_list_cons(ext->delegated, &addr, plen, node->id, 0, 0);
             if(pl != NULL)
