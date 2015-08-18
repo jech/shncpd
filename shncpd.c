@@ -429,6 +429,8 @@ main(int argc, char **argv)
 
     check_routing();
 
+    init_signals();
+
     if(serve_ra) {
         rc = ra_setup();
         if(rc < 0)
@@ -440,8 +442,6 @@ main(int argc, char **argv)
         if(rc < 0)
             perror("Couldn't initialise DHCPv4.\n");
     }
-
-    init_signals();
 
     debugf("My id: %s\n", format_32(myid));
 
