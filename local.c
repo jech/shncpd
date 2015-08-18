@@ -53,8 +53,8 @@ set_config_var(const char *name, const struct prefix_list *pl, int v4)
             else
                 inet_ntop(AF_INET6, &pl->prefixes[i].p, a, sizeof(a));
             if(i > 0)
-                strncat(buf, " ", sizeof(buf));
-            strncat(buf, a, sizeof(buf));
+                strncat(buf, " ", sizeof(buf) - strlen(a));
+            strncat(buf, a, sizeof(buf) - strlen(a));
         }
         return setenv(name, buf, 1);
     }
