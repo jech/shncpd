@@ -577,14 +577,16 @@ best_prefix(const struct prefix *delegated, int eid,
     struct prefix *best = NULL;
     int i;
 
-    for(i = 0; i < link_assigned->numprefixes; i++) {
-        struct prefix *p = &link_assigned->prefixes[i];
-        if(!prefix_within(p, delegated) && !prefix_within(delegated, p))
-            continue;
-        if(best && prefix_takes_precedence(best, p))
-            continue;
+    if(link_assigned) {
+        for(i = 0; i < link_assigned->numprefixes; i++) {
+            struct prefix *p = &link_assigned->prefixes[i];
+            if(!prefix_within(p, delegated) && !prefix_within(delegated, p))
+                continue;
+            if(best && prefix_takes_precedence(best, p))
+                continue;
 
-        best = p;
+            best = p;
+        }
     }
 
     if(!best)
