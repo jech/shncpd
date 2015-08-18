@@ -347,6 +347,8 @@ dhcpv4_parse(unsigned char *buf, int buflen,
             memcpy(sid, tlv + 2, 4);
             break;
         case 61:
+            if(cid != NULL)
+                goto fail;
             cid = malloc(bodylen);
             if(cid == NULL)
                 goto fail;
@@ -354,6 +356,8 @@ dhcpv4_parse(unsigned char *buf, int buflen,
             cidlen = bodylen;
             break;
         case 77:
+            if(uc != NULL)
+                goto fail;
             uc = malloc(bodylen);
             if(uc == NULL)
                 goto fail;
@@ -363,9 +367,7 @@ dhcpv4_parse(unsigned char *buf, int buflen,
         }
         i += 2 + bodylen;
     }
-    fprintf(stderr, "Couldn't find end of DHCPv4 options.\n");
-    return -1;
-
+    /* Fall through */
  fail:
     fprintf(stderr, "Failed to parse DHCPv4 packet.\n");
     free(cid);
