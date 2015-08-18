@@ -52,7 +52,6 @@ THE SOFTWARE.
 
 #define RECVBUF_SIZE 4000
 struct timespec now;
-const struct timeval zero = {0, 0};
 
 static volatile sig_atomic_t exiting = 0, dumping = 0, rescan = 0;
 struct in6_addr protocol_group;
