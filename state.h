@@ -76,6 +76,7 @@ struct node_neighbour {
 struct external {
     struct prefix_list *delegated;
     struct prefix_list *dns;
+    struct prefix_list *ntp;
 };
 
 extern struct interface interfaces[MAXINTERFACES];
@@ -106,4 +107,4 @@ int republish(int do_neighs, int reset);
 void node_hash(unsigned char *h, const unsigned char *data, int len);
 int network_hash(unsigned char *);
 void destroy_external(struct external *e);
-struct prefix_list *all_dns(int v6);
+struct prefix_list *all_dhcp_data(int ntp, int v4, int v6);

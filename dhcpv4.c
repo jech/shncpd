@@ -692,7 +692,7 @@ dhcpv4_receive()
     if(!interface_dhcpv4(interface))
         goto nak;
 
-    dns = all_dns(0);
+    dns = all_dhcp_data(0, 1, 0);
 
     switch(type) {
     case 1:                     /* DHCPDISCOVER */

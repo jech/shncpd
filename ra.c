@@ -180,7 +180,7 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
         }
 
         if(router >= 0) {
-            struct prefix_list *dns = all_dns(1);
+            struct prefix_list *dns = all_dhcp_data(0, 0, 1);
 
             if(dns && dns->numprefixes > 0) {
                 CHECK(8 + dns->numprefixes * 16);

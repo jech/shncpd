@@ -354,18 +354,20 @@ destroy_external(struct external *e)
 }
 
 struct prefix_list *
-all_dns(int v6)
+all_dhcp_data(int ntp, int v4, int v6)
 {
     int i, j, k;
     struct prefix_list *pl = create_prefix_list(), *pl2;
 
     for(i = 0; i < numnodes; i++) {
         for(j = 0; j < nodes[i].numexts; j++) {
-            if(nodes[i].exts[j]->dns == NULL)
+            struct prefix_list *data =
+                ntp ? nodes[i].exts[j]->ntp : nodes[i].exts[j]->dns;
+            if(data == NULL)
                 continue;
             for(k = 0; k < nodes[i].exts[j]->dns->numprefixes; k++) {
-                struct prefix *p = &nodes[i].exts[j]->dns->prefixes[k];
-                if(!prefix_v4(p) != !!v6)
+                struct prefix *p = &data->prefixes[k];
+                if((!v4 && prefix_v4(p)) || (!v6 && !prefix_v4(p)))
                     continue;
                 pl2 = prefix_list_cons_prefix(pl, p);
                 if(pl2 == NULL) {

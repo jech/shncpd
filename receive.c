@@ -522,19 +522,13 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
             break;
         }
         case 37: {
-            struct prefix_list *dns;
             debugf("       DHCPV6-DATA\n");
-            dns = parse_dhcpv6(tlv + 4, bodylen, ext->dns);
-            if(dns)
-                ext->dns = dns;
+            parse_dhcpv6(tlv + 4, bodylen, &ext->dns, &ext->ntp);
             break;
         }
         case 38: {
-            struct prefix_list *dns;
             debugf("       DHCPV4-DATA\n");
-            dns = parse_dhcpv4(tlv + 4, bodylen, ext->dns);
-            if(dns)
-                ext->dns = dns;
+            parse_dhcpv4(tlv + 4, bodylen, &ext->dns, &ext->ntp);
             break;
         }
         default:
@@ -553,8 +547,9 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
     return NULL;
 }
 
-struct prefix_list *
-parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
+int
+parse_dhcpv4(const unsigned char *buf, int buflen,
+             struct prefix_list **dns, struct prefix_list **ntp)
 {
     int i = 0;
 
@@ -574,11 +569,14 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
         case 0:
             i++;
             continue;
-        case 6: {
+        case 6:
+        case 42: {
             int j;
             struct in6_addr addr;
             struct prefix_list *pl;
-            debugf("         Name Server ");
+            debugf(type == 6 ?
+                   "         Name Server " :
+                   "         NTP Server ");
             for(j = 0; j < bodylen / 4; j++) {
                 unsigned char a[16] =
                     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };
@@ -586,9 +584,15 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
                 memcpy(&addr, a, 16);
                 debug_address(&addr);
                 debugf(" ");
-                pl = prefix_list_cons(dns, &addr, 128, NULL, 0, 0);
-                if(pl != NULL)
-                    dns = pl;
+                if(type == 6) {
+                    pl = prefix_list_cons(*dns, &addr, 128, NULL, 0, 0);
+                    if(pl != NULL)
+                        *dns = pl;
+                } else {
+                    pl = prefix_list_cons(*ntp, &addr, 128, NULL, 0, 0);
+                    if(pl != NULL)
+                        *ntp = pl;
+                }
             }
             debugf("\n");
             break;
@@ -601,14 +605,15 @@ parse_dhcpv4(const unsigned char *buf, int buflen, struct prefix_list *dns)
 
         i += 2 + bodylen;
     }
-    return dns;
+    return 1;
 
  fail:
-    return NULL;
+    return -1;
 }
 
-struct prefix_list *
-parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
+int
+parse_dhcpv6(const unsigned char *buf, int buflen,
+             struct prefix_list **dns, struct prefix_list **ntp)
 {
     int i = 0;
 
@@ -629,18 +634,27 @@ parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
         }
 
         switch(type) {
-        case 23: {
+        case 23:
+        case 31: {
             int j;
             struct in6_addr addr;
             struct prefix_list *pl;
-            debugf("         OPTION_DNS_SERVERS ");
+            debugf(type == 23 ?
+                   "         OPTION_DNS_SERVERS " :
+                   "         OPTION_SNTP_SERVERS ");
             for(j = 0; j < bodylen / 16; j++) {
                 memcpy(&addr, tlv + i + 2 + j * 16, 16);
                 debug_address(&addr);
                 debugf(" ");
-                pl = prefix_list_cons(dns, &addr, 128, NULL, 0, 0);
-                if(pl != NULL)
-                    dns = pl;
+                if(type == 23) {
+                    pl = prefix_list_cons(*dns, &addr, 128, NULL, 0, 0);
+                    if(pl != NULL)
+                        *dns = pl;
+                } else {
+                    pl = prefix_list_cons(*ntp, &addr, 128, NULL, 0, 0);
+                    if(pl != NULL)
+                        *ntp = pl;
+                }
             }
             debugf("\n");
             break;
@@ -653,8 +667,8 @@ parse_dhcpv6(const unsigned char *buf, int buflen, struct prefix_list *dns)
         i += 4 + bodylen;
         i += -i & 3;
     }
-    return dns;
+    return 1;
 
  fail:
-    return NULL;
+    return -1;
 }

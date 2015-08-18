@@ -27,7 +27,7 @@ int parse_packet(const unsigned char *buf, int buflen,
 int parse_node_state(struct node *node);
 struct external *
 parse_external(struct node *node, const unsigned char *buf, int buflen);
-struct prefix_list *parse_dhcpv4(const unsigned char *buf, int buflen,
-                                 struct prefix_list *dns);
-struct prefix_list *parse_dhcpv6(const unsigned char *buf, int buflen,
-                                 struct prefix_list *dns);
+int parse_dhcpv4(const unsigned char *buf, int buflen,
+                 struct prefix_list **dns, struct prefix_list **ntp);
+int parse_dhcpv6(const unsigned char *buf, int buflen,
+                 struct prefix_list **dns, struct prefix_list **ntp);
