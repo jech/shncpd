@@ -678,8 +678,8 @@ main(int argc, char **argv)
 
  usage:
     fprintf(stderr,
-            "shcpd [-m group] [-p port] [-d debug-level] [-R]\n"
-            "      [-E prefix]... [-N address]... interface...\n");
+            "shncpd [-m group] [-p port] [-d debug-level] [-R]\n"
+            "       [-E prefix]... [-N address]... interface...\n");
  fail:
     exit(1);
 }
