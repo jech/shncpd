@@ -560,7 +560,7 @@ generate_v4(unsigned char *ip_return, unsigned char *mask_return,
                 if(plen < 0 || plen > 30)
                     continue;
                 /* Check that we are not in the first quarter. */
-                DO_NTOHS(addr, ip);
+                DO_NTOHL(addr, ip);
                 if((addr & (3 << (30 - plen))) == 0)
                     continue;
                 memcpy(ip_return, ip, 4);
