@@ -35,6 +35,7 @@ THE SOFTWARE.
 #include "state.h"
 #include "send.h"
 #include "prefix.h"
+#include "dhcpv4.h"
 #include "util.h"
 
 #define SENDBUF_SIZE 4000
@@ -203,11 +204,9 @@ format_my_state(unsigned char *buf, int buflen)
     SHORT(32);
     SHORT(12);
     SHORT(0x100);
-    if(serve_dhcpv4) {
-        SHORT(4);               /* L = 4 */
-    } else {
-        SHORT(0);
-    }
+    BYTE(0);
+    BYTE(interface_dhcpv4_prio(neighs[j].interface) & 0x0F);
+
     BYTES("SHNCPD/0", 8);
     PAD();
 

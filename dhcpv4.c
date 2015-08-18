@@ -131,21 +131,34 @@ find_matching_lease(const unsigned char *cid, int cidlen,
 }
 
 int
+interface_dhcpv4_prio(struct interface *interface)
+{
+    if(serve_dhcpv4)
+        return 4;
+    else
+        return 0;
+}
+
+int
 interface_dhcpv4(struct interface *interface)
 {
-    int i;
+    int i, prio;
 
-    if(!serve_dhcpv4)
+    prio = interface_dhcpv4_prio(interface);
+    if(prio == 0)
         return 0;
 
     for(i = 0; i < numneighs; i++) {
         if(neighs[i].interface == interface) {
             struct node *node = find_node(neighs[i].id, 0);
+            unsigned char capa[2];
+            capa[0] = 0;
+            capa[1] = interface_dhcpv4_prio(interface) & 0x0F;
             if(node == NULL)
                 continue;
-            if((node->capabilities[1] & 0x0F) > 4)
+            if((node->capabilities[1] & 0x0F) > prio)
                 return 0;
-            if(memcmp(node->capabilities, "\0\4", 2) > 0)
+            if(memcmp(node->capabilities, capa, 2) > 0)
                 return 0;
             if(memcmp(node->id, myid, 4) > 0)
                 return 0;
@@ -668,9 +681,6 @@ dhcpv4_receive()
 
     debugf("\n");
 
-    if(!interface_dhcpv4(interface))
-        goto done;
-
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
     if(broadcast || memcmp(&from.sin_addr, zeroes, 4) == 0)
@@ -678,6 +688,9 @@ dhcpv4_receive()
     else
         memcpy(&to.sin_addr, &from.sin_addr, 4);
     to.sin_port = htons(68);
+
+    if(!interface_dhcpv4(interface))
+        goto nak;
 
     dns = all_dns(0);
 
