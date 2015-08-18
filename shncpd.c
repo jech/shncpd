@@ -294,7 +294,7 @@ main(int argc, char **argv)
     struct external *external = NULL;
 
     while(1) {
-        opt = getopt(argc, argv, "m:p:d:RDE:N:s:");
+        opt = getopt(argc, argv, "m:p:d:RDE:N:s:L:A:");
         if(opt < 0)
             break;
 
@@ -348,6 +348,17 @@ main(int argc, char **argv)
         case 's':
             local_script = optarg;
             break;
+        case 'L':
+        case 'A':
+            if(numinterfaces >= MAXINTERFACES) {
+                fprintf(stderr, "Too many interfaces.\n");
+                exit(1);
+            }
+            interfaces[numinterfaces].ifname = optarg;
+            interfaces[numinterfaces].type =
+                opt == 'L' ? INTERFACE_LEAF : INTERFACE_ADHOC;
+            numinterfaces++;
+            break;
         default:
             goto usage;
         }
@@ -359,6 +370,7 @@ main(int argc, char **argv)
             exit(1);
         }
         interfaces[numinterfaces].ifname = argv[i];
+        interfaces[numinterfaces].type = INTERFACE_INTERNAL;
         numinterfaces++;
     }
 
@@ -462,12 +474,14 @@ main(int argc, char **argv)
             struct timespec k;
             if(interfaces[i].ifindex == 0)
                 continue;
-            trickle_deadline(&t, &interfaces[i].trickle);
-            ts_min(&ts, &t);
-            ts_add_msec(&k, &interfaces[i].last_sent,
-                        DNCP_KEEPALIVE_INTERVAL);
-            ts_add_random(&k, &k, HNCP_I_min / 2);
-            ts_min(&ts, &k);
+            if(interfaces[i].type < INTERFACE_LEAF) {
+                trickle_deadline(&t, &interfaces[i].trickle);
+                ts_min(&ts, &t);
+                ts_add_msec(&k, &interfaces[i].last_sent,
+                            DNCP_KEEPALIVE_INTERVAL);
+                ts_add_random(&k, &k, HNCP_I_min / 2);
+                ts_min(&ts, &k);
+            }
             ts_min(&ts, &interfaces[i].ra_timeout);
         }
 
@@ -502,7 +516,8 @@ main(int argc, char **argv)
             printf("Node %s%s\n", format_32(myid),
                    is_a_router() ? " (router)" : "");
             for(i = 0; i < numinterfaces; i++) {
-                printf("Interface %s%s\n", interfaces[i].ifname,
+                printf("Interface %s (%s)%s\n", interfaces[i].ifname,
+                       interface_type(&interfaces[i]),
                        interface_dhcpv4(&interfaces[i])? " (DHCPv4)" : "");
                 for(j = 0; j < interfaces[i].numassigned; j++) {
                     char d[INET6_ADDRSTRLEN], a[INET6_ADDRSTRLEN];
@@ -560,6 +575,8 @@ main(int argc, char **argv)
         }
 
         for(i = 0; i < numinterfaces; i++) {
+            if(interfaces[i].type >= INTERFACE_LEAF)
+                continue;
              if(trickle_trigger(&interfaces[i].trickle)) {
                 buffer_network_state(NULL, &interfaces[i]);
                 interfaces[i].last_sent = now;
@@ -654,7 +671,9 @@ main(int argc, char **argv)
                 fprintf(stderr, "Couldn't determine source of packet.\n");
                 unicast = 0;
             }
-            parse_packet(recvbuf, len, &sin6, unicast, &interfaces[interface]);
+            if(interfaces[interface].type < INTERFACE_LEAF)
+                parse_packet(recvbuf, len, &sin6, unicast,
+                             &interfaces[interface]);
             MEM_UNDEFINED(recvbuf, RECVBUF_SIZE);
         }
 
@@ -692,8 +711,8 @@ main(int argc, char **argv)
  usage:
     fprintf(stderr,
             "shncpd [-m group] [-p port] [-d debug-level] [-R]\n"
-            "       [-E prefix]... [-N address]... [-s script] "
-            "interface...\n");
+            "       [-E prefix]... [-N address]... [-s script]\n"
+            "       [-L interface]... [-A interface]... interface...\n");
  fail:
     exit(1);
 }

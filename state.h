@@ -24,9 +24,16 @@ THE SOFTWARE.
 #define MAXNODES 100
 #define MAXNEIGHS 40
 
+enum interface_type {
+    INTERFACE_INTERNAL = 1,
+    INTERFACE_ADHOC,
+    INTERFACE_LEAF
+};
+
 struct interface {
     char *ifname;
     int ifindex;
+    enum interface_type type;
     struct timespec last_request_sent;
     struct timespec last_sent;
     struct trickle_state trickle;
@@ -96,6 +103,7 @@ id_eq(const unsigned char *id1, const unsigned char *id2)
 
 void trickle_reset_all(void);
 struct interface *find_interface(int ifindex);
+const char *interface_type(struct interface *interface);
 struct neighbour *
 find_neighbour(struct interface *interface, const unsigned char *id,
                unsigned int eid, const struct sockaddr_in6 *create);

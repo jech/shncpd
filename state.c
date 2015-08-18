@@ -79,6 +79,17 @@ find_interface(int ifindex)
     return NULL;
 }
 
+const char *
+interface_type(struct interface *interface)
+{
+    switch(interface->type) {
+    case INTERFACE_INTERNAL: return "internal";
+    case INTERFACE_ADHOC: return "ad-hoc";
+    case INTERFACE_LEAF: return "leaf";
+    default: return "unknown";
+    }
+}
+
 struct neighbour *
 find_neighbour(struct interface *interface, const unsigned char *id,
                unsigned int eid, const struct sockaddr_in6 *create)

@@ -476,17 +476,23 @@ all_assigned_prefixes()
 }
 
 struct prefix_list *
-link_assigned_prefixes(int eid, const struct prefix *overlaps)
+link_assigned_prefixes(struct interface *interface,
+                       const struct prefix *overlaps)
 {
     int i, j;
-    struct prefix_list *pl = create_prefix_list(), *pl2;
+    struct prefix_list *pl;
+
+    if(interface->type == INTERFACE_ADHOC)
+        return NULL;
+
+    pl = create_prefix_list();
     if(pl == NULL)
         return NULL;
 
     for(i = 0; i < numneighs; i++) {
         struct node *node;
         unsigned int his_id = ~0;
-        if(neighs[i].interface->ifindex != eid)
+        if(neighs[i].interface->ifindex != interface->ifindex)
             continue;
         node = find_node(neighs[i].id, 0);
         if(node == NULL || node->neighs == NULL || node->assigned == NULL)
@@ -506,6 +512,7 @@ link_assigned_prefixes(int eid, const struct prefix *overlaps)
             p = &node->assigned->prefixes[j];
             if(p->eid == his_id &&
                (!overlaps || prefix_overlaps(p, overlaps))) {
+                struct prefix_list *pl2;
                 pl2 = prefix_list_cons_prefix(pl, p);
                 if(pl2 == NULL) {
                     destroy_prefix_list(pl);
@@ -912,8 +919,7 @@ prefix_assignment(int changed)
         for(j = 0; j < interfaces[i].numassigned; j++) {
             struct assigned_prefix *ap = &interfaces[i].assigned[j];
             struct prefix_list *link_assigned =
-                link_assigned_prefixes(interfaces[i].ifindex,
-                                       &ap->delegated);
+                link_assigned_prefixes(&interfaces[i], &ap->delegated);
             struct prefix_list *all_assigned = all_assigned_prefixes();
             int bt =
                 ap->backoff_timer.tv_sec > 0 &&

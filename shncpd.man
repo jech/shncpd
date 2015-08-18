@@ -72,6 +72,12 @@ win the election, even if we are not acting as a router.
 Run the given script when we learn new DHCP data.  The script is called
 multiple times with the argument "up", then a single time with the
 argument "down".
+.TP
+.BR \-L " interface"
+Add a leaf interface.
+.TP
+.BR \-A " interface"
+Add an ad-hoc interface.
 .SH SIGNALS
 .TP
 .B SIGUSR1
