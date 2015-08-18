@@ -872,7 +872,7 @@ address_assignment_1(struct interface *interface,
 }
 
 int
-prefix_assignment(int changed, int *republish_return)
+prefix_assignment(int changed)
 {
     struct prefix_list *delegated = all_delegated_prefixes();
     struct prefix_list *addresses = all_node_addresses();
@@ -958,10 +958,8 @@ prefix_assignment(int changed, int *republish_return)
     destroy_prefix_list(delegated);
     destroy_prefix_list(addresses);
 
-    if(republish_return)
-        *republish_return = republish;
-
-    return ts_minus_msec(&again, &now);
+    prefix_assignment_time = again;
+    return republish;
 }
 
 void

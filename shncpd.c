@@ -391,7 +391,7 @@ main(int argc, char **argv)
         node->numexts = 1;
     }
 
-    prefix_assignment(1, NULL);
+    prefix_assignment(1);
     rc = republish(1, 0);
     if(rc < 0) {
         fprintf(stderr, "Couldn't compute myself.\n");
@@ -439,8 +439,6 @@ main(int argc, char **argv)
         if(rc < 0)
             perror("Couldn't initialise DHCPv4.\n");
     }
-
-    ts_add_random(&prefix_assignment_time, &now, 5000);
 
     init_signals();
 
@@ -545,9 +543,7 @@ main(int argc, char **argv)
             changed = changed || rc;
             ts_add_random(&check_time, &now, 20000);
             if(changed) {
-                int msecs;
-                msecs = prefix_assignment(1, NULL);
-                ts_add_msec(&prefix_assignment_time, &now, msecs);
+                prefix_assignment(1);
                 republish(1, 1);
             }
             rescan = 0;
@@ -570,10 +566,9 @@ main(int argc, char **argv)
         }
 
         if(ts_compare(&now, &prefix_assignment_time) > 0) {
-            int r, msecs;
-            msecs = prefix_assignment(0, &r);
-            ts_add_msec(&prefix_assignment_time, &now, msecs);
-            if(r)
+            int r;
+            r = prefix_assignment(0);
+            if(r > 0)
                 republish(0, 1);
         }
 
