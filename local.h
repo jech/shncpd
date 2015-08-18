@@ -20,22 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#define HNCP_I_min 200
-#define HNCP_I_max 25000
+extern char *local_script;
 
-#define DNCP_KEEPALIVE_INTERVAL 20000
-#define DNCP_KEEPALIVE_MULTIPLIER_PERCENT 210
+int run_local_script(int up);
 
-extern unsigned char myid[4];
-extern struct timespec prefix_assignment_time;
-extern struct timespec republish_time;
-extern struct timespec data_change_time;
-extern struct timespec now;
-extern struct in6_addr protocol_group;
-extern unsigned int protocol_port;
-extern int protocol_socket;
-extern int protocol_socket;
-extern int debug_level;
-
-extern int serve_ra, serve_dhcpv4;
-extern int is_a_router(void);

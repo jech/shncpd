@@ -67,6 +67,11 @@ advertisements are sent if we are a router.
 .B \-D
 Disable the DHCPv4 server.  By default, the DHCPv4 server is enabled if we
 win the election, even if we are not acting as a router.
+.TP
+.BR \-s " script"
+Run the given script when we learn new DHCP data.  The script is called
+multiple times with the argument "up", then a single time with the
+argument "down".
 .SH SIGNALS
 .TP
 .B SIGUSR1

@@ -47,6 +47,7 @@ THE SOFTWARE.
 #include "prefix.h"
 #include "ra.h"
 #include "dhcpv4.h"
+#include "local.h"
 #include "util.h"
 #include "kernel.h"
 
@@ -63,6 +64,8 @@ unsigned char myid[4];
 struct timespec check_time = {0, 0};
 struct timespec republish_time = {0, 0};
 struct timespec prefix_assignment_time = {0, 0};
+struct timespec data_change_time = {0, 0};
+struct timespec local_script_time = {0, 0};
 
 int debug_level = 0;
 int serve_ra = 1;
@@ -291,7 +294,7 @@ main(int argc, char **argv)
     struct external *external = NULL;
 
     while(1) {
-        opt = getopt(argc, argv, "m:p:d:RDE:N:");
+        opt = getopt(argc, argv, "m:p:d:RDE:N:s:");
         if(opt < 0)
             break;
 
@@ -342,6 +345,9 @@ main(int argc, char **argv)
                 external->dns = pl;
             break;
         }
+        case 's':
+            local_script = optarg;
+            break;
         default:
             goto usage;
         }
@@ -572,6 +578,13 @@ main(int argc, char **argv)
                 republish(0, 1);
         }
 
+        if((local_script_time.tv_sec == 0 && data_change_time.tv_sec > 0) ||
+           (ts_minus_msec(&now, &local_script_time) > 60000 &&
+            ts_compare(&local_script_time, &data_change_time) < 0)) {
+            run_local_script(1);
+            local_script_time = now;
+        }
+
         if(FD_ISSET(protocol_socket, &readfds)) {
             struct sockaddr_in6 sin6;
             int unicast;
@@ -670,6 +683,7 @@ main(int argc, char **argv)
 
     ra_cleanup();
     dhcpv4_cleanup();
+    run_local_script(0);
     prefix_assignment_cleanup();
     route_externals(node->exts, node->numexts, 0);
 
@@ -678,7 +692,8 @@ main(int argc, char **argv)
  usage:
     fprintf(stderr,
             "shncpd [-m group] [-p port] [-d debug-level] [-R]\n"
-            "       [-E prefix]... [-N address]... interface...\n");
+            "       [-E prefix]... [-N address]... [-s script] "
+            "interface...\n");
  fail:
     exit(1);
 }
