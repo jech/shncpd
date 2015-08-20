@@ -131,6 +131,7 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
     int buflen = 1024;
     unsigned char buf[buflen];
     int i = 0, j;
+    struct prefix_list *d;
 
     MEM_UNDEFINED(buf, buflen);
 
@@ -182,26 +183,45 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
                 BYTES(&p->p, 16);
             }
         }
+    }
 
-        if(router >= 1) {
-            struct prefix_list *dns = all_dhcp_data(0, 0, 1);
-
-            if(dns && dns->numprefixes > 0) {
-                CHECK(8 + dns->numprefixes * 16);
-                BYTE(25);
-                BYTE(1 + dns->numprefixes * 2);
-                SHORT(0);
-                LONG(MAX_RTR_ADV_INTERVAL * 3 / 2);
-                for(j = 0; j < dns->numprefixes; j++) {
-                    BYTES(&dns->prefixes[j].p, 16);
-                }
+    d = all_delegated_prefixes();
+    if(d && d->numprefixes > 0) {
+        for(j = 0; j < d->numprefixes; j++) {
+            struct prefix *p = &d->prefixes[j];
+            if(prefix_v4(p)) {
+                continue;
             }
-            destroy_prefix_list(dns);
+
+            CHECK(32);
+            BYTE(24);
+            BYTE(p->plen > 64 ? 3 : 2);
+            BYTE(p->plen);
+            BYTE(0);
+            LONG(router >= 1 ? 3600 : 0);
+            BYTES(&p->p, p->plen > 64 ? 16 : 8);
         }
+    }
+    destroy_prefix_list(d);
+
+
+    if(router >= 1) {
+        struct prefix_list *dns = all_dhcp_data(0, 0, 1);
+
+        if(dns && dns->numprefixes > 0) {
+            CHECK(8 + dns->numprefixes * 16);
+            BYTE(25);
+            BYTE(1 + dns->numprefixes * 2);
+            SHORT(0);
+            LONG(MAX_RTR_ADV_INTERVAL * 3 / 2);
+            for(j = 0; j < dns->numprefixes; j++) {
+                BYTES(&dns->prefixes[j].p, 16);
+            }
+        }
+        destroy_prefix_list(dns);
     }
 
     debugf("-> Router Advertisement\n");
-
     return sendto(ra_socket, buf, i, 0, (struct sockaddr*)to, sizeof(*to));
 
  fail:

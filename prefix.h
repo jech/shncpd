@@ -76,5 +76,6 @@ int prefix_v4(const struct prefix *p);
 int interface_v4(struct interface *interface, unsigned char *v4_return);
 int generate_random_v4(unsigned char *ip, const struct prefix_list *pl);
 int route_externals(struct external **ext, int numexternals, int add);
+struct prefix_list *all_delegated_prefixes(void);
 int prefix_assignment(int changed);
 void prefix_assignment_cleanup();
