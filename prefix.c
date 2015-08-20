@@ -398,6 +398,26 @@ prefix_list_overlap(const struct prefix *p, const struct prefix_list *pl,
     return 0;
 }
 
+/* Remove all prefixes that are strictly included in another. */
+struct prefix_list *
+filter_included(struct prefix_list *pl)
+{
+    int i, j;
+
+    i = 0;
+ again:
+    while(i < pl->numprefixes) {
+        for(j = 0; j < pl->numprefixes; j++) {
+            if(i != j && prefix_within(&pl->prefixes[i], &pl->prefixes[j])) {
+                pl = prefix_list_remove(pl, i);
+                goto again;
+            }
+        }
+        i++;
+    }
+    return pl;
+}
+
 int
 prefix_valid(const struct prefix *p,
              const struct prefix_list *pl1, const struct prefix_list *pl2)
@@ -939,7 +959,8 @@ address_assignment_1(struct interface *interface,
 int
 prefix_assignment(int changed)
 {
-    struct prefix_list *delegated = all_delegated_prefixes();
+    struct prefix_list *delegated =
+        filter_included(all_delegated_prefixes());
     struct prefix_list *addresses = all_node_addresses();
     int i, j;
     int republish = 0;
