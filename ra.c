@@ -116,7 +116,7 @@ fail:
     return -1;
 }
 
-#define CHECK(_n) if(buflen < i + (_n)) goto fail
+#define CHECK(_n) if(buflen < i + (_n)) goto sendit
 #define BYTE(_v) buf[i] = (_v); i++
 #define BYTES(_v, _len) memcpy(buf + i, (_v), (_len)); i += (_len)
 #define SHORT(_v) DO_HTONS(buf + i, (_v)); i += 2
@@ -221,11 +221,9 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
         destroy_prefix_list(dns);
     }
 
+ sendit:
     debugf("-> Router Advertisement\n");
     return sendto(ra_socket, buf, i, 0, (struct sockaddr*)to, sizeof(*to));
-
- fail:
-    return -1;
 }
 
 void
