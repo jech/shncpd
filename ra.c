@@ -396,6 +396,7 @@ int
 ra_routing_change(int router)
 {
     send_multicast_ra(NULL, router);
+    schedule_ra(NULL, 1, 1);
     return 1;
 }
 
