@@ -264,10 +264,11 @@ check_neighs()
 static int
 check_routing()
 {
-    int is_now_a_router = kernel_router() > 0;
+    int is_now_a_router = kernel_router();
 
     if(is_now_a_router != was_a_router) {
-        debugf("Change in routing status: %d\n", is_now_a_router);
+        debugf("Change in routing status: %d -> %d\n",
+               was_a_router, is_now_a_router);
         was_a_router = is_now_a_router;
         ra_routing_change(is_now_a_router);
         republish(0, 0);
@@ -513,8 +514,10 @@ main(int argc, char **argv)
 
         if(dumping) {
             int i, j;
+            int r = is_a_router();
             printf("Node %s%s\n", format_32(myid),
-                   is_a_router() ? " (router)" : "");
+                   r == 2 ? " (default router)" :
+                   r == 1 ? " (router)" : "");
             for(i = 0; i < numinterfaces; i++) {
                 printf("Interface %s (%s)%s\n", interfaces[i].ifname,
                        interface_type(&interfaces[i]),

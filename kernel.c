@@ -131,11 +131,14 @@ kernel_route(int ifindex, const char *ifname,
     return -1;
 }
 
+/* Returns 0 if not a router, 2 if a router with a default route. */
+
 int
 kernel_router()
 {
     char buf[100];
     int fd, rc;
+    int router;
 
     fd = open("/proc/sys/net/ipv6/conf/all/forwarding", O_RDONLY);
     if(fd < 0)
@@ -150,5 +153,11 @@ kernel_router()
 
     buf[rc] = '\0';
 
-    return atoi(buf);
+    router = atoi(buf);
+
+    if(!router)
+        return 0;
+
+    rc = system("ip -6 route show | grep -q '^default '");
+    return WIFEXITED(rc) && WEXITSTATUS(rc) == 1 ? 1 : 2;
 }

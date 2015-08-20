@@ -122,7 +122,7 @@ fail:
 #define SHORT(_v) DO_HTONS(buf + i, (_v)); i += 2
 #define LONG(_v) DO_HTONL(buf + i, (_v)); i += 4
 
-/* router is 1 for default router, and -1 for not a router at all. */
+/* router is 2 for default router, and 0 for not a router at all. */
 
 static int
 send_ra(struct interface *interface, const struct sockaddr_in6 *to,
@@ -140,7 +140,7 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
     SHORT(0);
     BYTE(0);
     BYTE(0);
-    SHORT(router > 0 ? 3600 : 0);
+    SHORT(router >= 2 ? 3600 : 0);
     LONG(0);
     LONG(0);
 
@@ -163,25 +163,27 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
         destroy_prefix_list(interface->retractions);
         interface->retractions = NULL;
 
-        for(j = 0; j < interface->numassigned; j++) {
-            struct assigned_prefix *ap = &interface->assigned[j];
-            struct prefix *p = &ap->assigned;
+        if(router >= 1) {
+            for(j = 0; j < interface->numassigned; j++) {
+                struct assigned_prefix *ap = &interface->assigned[j];
+                struct prefix *p = &ap->assigned;
 
-            if(!ap->applied || prefix_v4(&ap->assigned))
-                continue;
+                if(!ap->applied || prefix_v4(&ap->assigned))
+                    continue;
 
-            CHECK(32);
-            BYTE(3);
-            BYTE(4);
-            BYTE(p->plen);
-            BYTE(router < 0 ? 0x80 : (0x80 | 0x40));
-            LONG(router < 0 ? 0 : 3600);
-            LONG(router < 0 ? 0 : 1800);
-            LONG(0);
-            BYTES(&p->p, 16);
+                CHECK(32);
+                BYTE(3);
+                BYTE(4);
+                BYTE(p->plen);
+                BYTE(router <= 0 ? 0x80 : (0x80 | 0x40));
+                LONG(router <= 0 ? 0 : 3600);
+                LONG(router <= 0 ? 0 : 1800);
+                LONG(0);
+                BYTES(&p->p, 16);
+            }
         }
 
-        if(router >= 0) {
+        if(router >= 1) {
             struct prefix_list *dns = all_dhcp_data(0, 0, 1);
 
             if(dns && dns->numprefixes > 0) {
@@ -373,13 +375,7 @@ ra_cleanup()
 int
 ra_routing_change(int router)
 {
-    if(router) {
-        debugf("Now a router: sending RA.\n");
-        send_multicast_ra(NULL, 1);
-    } else {
-        debugf("No longer a router: retracting RA.\n");
-        send_multicast_ra(NULL, -1);
-    }
+    send_multicast_ra(NULL, router);
     return 1;
 }
 
@@ -401,8 +397,9 @@ router_advertisement(int doread)
             continue;
 
         if(ts_compare(&now, &interface->ra_timeout) >= 0) {
-            if(kernel_router() > 0) {
-                rc = send_multicast_ra(interface, 1);
+            int r = kernel_router();
+            if(r > 0 || interface->retractions) {
+                rc = send_multicast_ra(interface, r);
                 if(rc < 0)
                     perror("send_ra");
             }
