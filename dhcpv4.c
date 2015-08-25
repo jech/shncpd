@@ -160,12 +160,16 @@ interface_dhcpv4(struct interface *interface)
             capa[1] = interface_dhcpv4_prio(interface) & 0x0F;
             if(node == NULL)
                 continue;
-            if((node->capabilities[1] & 0x0F) > prio)
+            if((node->capabilities[1] & 0x0F) > prio) {
                 return 0;
-            if(memcmp(node->capabilities, capa, 2) > 0)
-                return 0;
-            if(memcmp(node->id, myid, 4) > 0)
-                return 0;
+            } else if((node->capabilities[1] & 0x0F) == prio) {
+                if(memcmp(node->capabilities, capa, 2) > 0) {
+                    return 0;
+                } else if(memcmp(node->capabilities, capa, 2) == 0) {
+                    if(memcmp(node->id, myid, 4) > 0)
+                        return 0;
+                }
+            }
         }
     }
     return 1;
