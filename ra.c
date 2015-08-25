@@ -169,7 +169,8 @@ send_ra(struct interface *interface, const struct sockaddr_in6 *to,
                 struct assigned_prefix *ap = &interface->assigned[j];
                 struct prefix *p = &ap->assigned;
 
-                if(!ap->applied || prefix_v4(&ap->assigned))
+                if(!ap->applied || prefix_v4(&ap->assigned) ||
+                   p->plen >= 128)
                     continue;
 
                 CHECK(32);

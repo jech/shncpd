@@ -295,7 +295,7 @@ main(int argc, char **argv)
     struct external *external = NULL;
 
     while(1) {
-        opt = getopt(argc, argv, "m:p:d:RDE:N:s:L:A:");
+        opt = getopt(argc, argv, "m:p:d:RDE:N:s:L:A:M:");
         if(opt < 0)
             break;
 
@@ -351,13 +351,16 @@ main(int argc, char **argv)
             break;
         case 'L':
         case 'A':
+        case 'M':
             if(numinterfaces >= MAXINTERFACES) {
                 fprintf(stderr, "Too many interfaces.\n");
                 exit(1);
             }
             interfaces[numinterfaces].ifname = optarg;
             interfaces[numinterfaces].type =
-                opt == 'L' ? INTERFACE_LEAF : INTERFACE_ADHOC;
+                opt == 'L' ? INTERFACE_LEAF :
+                opt == 'A' ? INTERFACE_ADHOC :
+                INTERFACE_MESH;
             numinterfaces++;
             break;
         default:
@@ -714,7 +717,7 @@ main(int argc, char **argv)
     fprintf(stderr,
             "shncpd [-m group] [-p port] [-d debug-level] [-R]\n"
             "       [-E prefix]... [-N address]... [-s script]\n"
-            "       [-L interface]... [-A interface]... interface...\n");
+            "       [-L|-A|-M interface]... interface...\n");
  fail:
     exit(1);
 }

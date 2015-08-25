@@ -558,7 +558,7 @@ link_assigned_prefixes(struct interface *interface,
     int i, j;
     struct prefix_list *pl;
 
-    if(interface->type == INTERFACE_ADHOC)
+    if(interface->type == INTERFACE_ADHOC || interface->type == INTERFACE_MESH)
         return NULL;
 
     pl = create_prefix_list();
@@ -818,12 +818,17 @@ flush_assigned(struct interface *interface, struct assigned_prefix *ap)
 }
 
 static int
-select_plen(struct prefix *delegated)
+select_plen(struct prefix *delegated, enum interface_type type)
 {
+    if(type == INTERFACE_MESH)
+        return 128;
+
     if(prefix_v4(delegated))
         return min(126, max(120, delegated->plen + 4));
-    else
+    else if(delegated->plen <= 62)
         return 64;
+    else
+        return 80;
 }
 
 int
@@ -857,7 +862,9 @@ prefix_assignment_1(struct interface *interface,
             if(!backoff_triggered) {
                 ts_add_random(&ap->backoff_timer, &now, BACKOFF_MAX_DELAY);
             } else {
-                rc = random_prefix(&ap->assigned, select_plen(&ap->delegated),
+                rc = random_prefix(&ap->assigned,
+                                   select_plen(&ap->delegated,
+                                               interface->type),
                                    0, 1,
                                    &ap->delegated, all_assigned);
                 if(rc > 0) {
@@ -935,7 +942,8 @@ address_assignment_1(struct interface *interface,
     if(have_address || !have_assigned)
         return republish;
 
-    rc = random_prefix(&p, 128, 2, 0, &ap->assigned, addresses);
+    rc = random_prefix(&p, 128, min(2, 128 - ap->assigned.plen), 0,
+                       &ap->assigned, addresses);
     if(rc <= 0) {
         fprintf(stderr, "Couldn't generate random address.\n");
         return republish;

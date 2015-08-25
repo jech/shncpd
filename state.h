@@ -27,6 +27,7 @@ THE SOFTWARE.
 enum interface_type {
     INTERFACE_INTERNAL = 1,
     INTERFACE_ADHOC,
+    INTERFACE_MESH,
     INTERFACE_LEAF
 };
 

@@ -77,7 +77,14 @@ argument "down".
 Add a leaf interface.
 .TP
 .BR \-A " interface"
-Add an ad-hoc interface.
+Add an ad-hoc interface.  This assigns a /64 prefix (/24 for IPv4), and
+runs a RA and DHCPv4 server.  This is not likely to be useful, but it's in
+the spec.
+.TP
+.BR \-M " interface"
+Add an ad-hoc interface.  This doesn't assign any prefixes, only addresses,
+and doesn't run a DHCPv4 server.  THis is not in the spec, but is likely
+to actually be useful.
 .SH SIGNALS
 .TP
 .B SIGUSR1

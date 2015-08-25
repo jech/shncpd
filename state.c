@@ -85,6 +85,7 @@ interface_type(struct interface *interface)
     switch(interface->type) {
     case INTERFACE_INTERNAL: return "internal";
     case INTERFACE_ADHOC: return "ad-hoc";
+    case INTERFACE_MESH: return "mesh";
     case INTERFACE_LEAF: return "leaf";
     default: return "unknown";
     }

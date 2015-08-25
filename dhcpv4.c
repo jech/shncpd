@@ -145,6 +145,9 @@ interface_dhcpv4(struct interface *interface)
 {
     int i, prio;
 
+    if(interface->type == INTERFACE_MESH)
+        return 0;
+
     prio = interface_dhcpv4_prio(interface);
     if(prio == 0)
         return 0;
