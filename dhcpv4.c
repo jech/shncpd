@@ -646,7 +646,7 @@ dhcpv4_receive()
     while(cmsg != NULL) {
         if ((cmsg->cmsg_level == IPPROTO_IP) &&
             (cmsg->cmsg_type == IP_PKTINFO)) {
-            struct in_pktinfo *info = CMSG_DATA(cmsg);
+            struct in_pktinfo *info = (struct in_pktinfo*)CMSG_DATA(cmsg);
             ifindex = info->ipi_ifindex;
             break;
         }

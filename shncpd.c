@@ -666,7 +666,8 @@ main(int argc, char **argv)
             while(cmsg != NULL) {
                 if ((cmsg->cmsg_level == IPPROTO_IPV6) &&
 		    (cmsg->cmsg_type == IPV6_PKTINFO)) {
-                    struct in6_pktinfo *info = CMSG_DATA(cmsg);
+                    struct in6_pktinfo *info =
+                        (struct in6_pktinfo*)CMSG_DATA(cmsg);
                     unicast = !IN6_IS_ADDR_MULTICAST(&info->ipi6_addr);
                     break;
                 }
