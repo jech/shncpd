@@ -250,6 +250,10 @@ dhcpv4_request
     int type;
     int broadcast;
     unsigned char xid[4];
+    unsigned char ciaddr[4];
+    unsigned char yiaddr[4];
+    unsigned char siaddr[4];
+    unsigned char giaddr[4];
     unsigned char chaddr[16];
     unsigned char ip[4];
     unsigned char sid[4];
@@ -264,7 +268,10 @@ dhcpv4_parse(unsigned char *buf, int buflen,
              struct dhcpv4_request *ret)
 {
     int i = 0;
-    unsigned char xid[4] = {0}, chaddr[16] = {0}, ip[4] = {0}, sid[4] = {0};
+    unsigned char
+        xid[4] = {0},
+        ciaddr[4] = {0}, yiaddr[4] = {0}, siaddr[4] = {0}, giaddr[4] = {0},
+        chaddr[16] = {0}, ip[4] = {0}, sid[4] = {0};
     unsigned char *cid = NULL, *uc = NULL;
     int dhcp_type = -1, broadcast = 0, cidlen = 0, uclen = 0;
 
@@ -286,19 +293,19 @@ dhcpv4_parse(unsigned char *buf, int buflen,
     i += 2;
 
     /* ciaddr */
+    memcpy(ciaddr, buf + i, 4);
     i += 4;
 
     /* yiaddr */
+    memcpy(yiaddr, buf + i, 4);
     i += 4;
 
     /* siaddr */
+    memcpy(siaddr, buf + i, 4);
     i += 4;
 
     /* giaddr */
-    if(buflen - i < 4)
-        goto fail;
-    if(memcmp(buf + i, zeroes, 4) != 0)
-        goto fail;
+    memcpy(giaddr, buf + i, 4);
     i += 4;
 
     /* chaddr */
@@ -398,6 +405,10 @@ dhcpv4_parse(unsigned char *buf, int buflen,
     ret->broadcast = broadcast;
     memcpy(ret->chaddr, chaddr, 16);
     memcpy(ret->xid, xid, 4);
+    memcpy(ret->ciaddr, ciaddr, 4);
+    memcpy(ret->yiaddr, yiaddr, 4);
+    memcpy(ret->siaddr, siaddr, 4);
+    memcpy(ret->giaddr, giaddr, 4);
     memcpy(ret->ip, ip, 4);
     memcpy(ret->sid, sid, 4);
     ret->cid = cid;
