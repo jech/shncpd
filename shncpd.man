@@ -37,11 +37,11 @@ with redistribution of protocol 43 enabled.
 .TP
 .BI \-m " multicast-address"
 Specify the link-local multicast address to use.  The default is
-.BR ff02::8808 .
+.BR ff02::11 .
 .TP
 .BI \-p " port"
 Specify the UDP port number to use.  The default is
-.BR 8808 .
+.BR 8231 .
 .TP
 .BI \-d " level"
 Specify the amount of debugging information dumped to standard error.

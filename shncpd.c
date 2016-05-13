@@ -56,7 +56,7 @@ struct timespec now;
 
 static volatile sig_atomic_t exiting = 0, dumping = 0, rescan = 0;
 struct in6_addr protocol_group;
-unsigned int protocol_port = 8808;
+unsigned int protocol_port = 8231;
 int protocol_socket;
 
 unsigned char myid[4];
@@ -287,7 +287,7 @@ is_a_router()
 int
 main(int argc, char **argv)
 {
-    char *group = "ff02::8808";
+    char *group = "ff02::11";
     int opt, rc, i;
     unsigned int seed;
     struct node *node;
