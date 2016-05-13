@@ -244,13 +244,24 @@ dhcpv4_cleanup()
     }
 }
 
+struct
+dhcpv4_request
+{
+    int type;
+    int broadcast;
+    unsigned char xid[4];
+    unsigned char chaddr[16];
+    unsigned char ip[4];
+    unsigned char sid[4];
+    unsigned char *cid;
+    int cidlen;
+    unsigned char *uc;
+    int uclen;
+};
+
 static int
 dhcpv4_parse(unsigned char *buf, int buflen,
-             int *type_return, int *broadcast_return,
-             unsigned char *xid_return, unsigned char *chaddr_return,
-             unsigned char *ip_return, unsigned char *sid_return,
-             unsigned char **cid_return, int *cidlen_return,
-             unsigned char **uc_return, int *uclen_return)
+             struct dhcpv4_request *ret)
 {
     int i = 0;
     unsigned char xid[4] = {0}, chaddr[16] = {0}, ip[4] = {0}, sid[4] = {0};
@@ -383,30 +394,16 @@ dhcpv4_parse(unsigned char *buf, int buflen,
     return -1;
 
  done:
-    if(type_return)
-        *type_return = dhcp_type;
-    if(broadcast_return)
-        *broadcast_return = broadcast;
-    if(chaddr_return)
-        memcpy(chaddr_return, chaddr, 16);
-    if(xid_return)
-        memcpy(xid_return, xid, 4);
-    if(ip_return)
-        memcpy(ip_return, ip, 4);
-    if(sid_return)
-        memcpy(sid_return, sid, 4);
-    if(cid_return)
-        *cid_return = cid;
-    else
-        free(cid);
-    if(cidlen_return)
-        *cidlen_return = cidlen;
-    if(uc_return)
-        *uc_return = uc;
-    else
-        free(uc);
-    if(uclen_return)
-        *uclen_return = uclen;
+    ret->type = dhcp_type;
+    ret->broadcast = broadcast;
+    memcpy(ret->chaddr, chaddr, 16);
+    memcpy(ret->xid, xid, 4);
+    memcpy(ret->ip, ip, 4);
+    memcpy(ret->sid, sid, 4);
+    ret->cid = cid;
+    ret->cidlen = cidlen;
+    ret->uc = uc;
+    ret->uclen = uclen;
     return 1;
 }
 
@@ -608,10 +605,8 @@ dhcpv4_receive()
     struct sockaddr_in from, to;
     int bufsiz = 1500;
     unsigned char buf[bufsiz];
-    int type = -1, broadcast;
-    unsigned char xid[4], chaddr[16], ip[4], sid[4], myaddr[4];
-    unsigned char *cid = NULL, *uc = NULL;
-    int cidlen = 0, uclen;
+    unsigned char myaddr[4];
+    struct dhcpv4_request req;
     struct interface *interface;
     struct prefix_list *pl = NULL, *dns = NULL;
     int ifindex = -1;
@@ -675,15 +670,15 @@ dhcpv4_receive()
             pl = ppl;
     }
 
-    rc = dhcpv4_parse(buf, buflen, &type, &broadcast, xid, chaddr, ip,
-                      sid, &cid, &cidlen, &uc, &uclen);
+    memset(&req, 0, sizeof(req));
+    rc = dhcpv4_parse(buf, buflen, &req);
     if(rc < 0)
         return -1;
 
-    debugf("   DHCPv4 (type %d) on %s", type, interface->ifname);
+    debugf("   DHCPv4 (type %d) on %s", req.type, interface->ifname);
 
-    if(user_class_match(uc, uclen, "HOMENET") ||
-       (memcmp(sid, zeroes, 4) != 0 && memcmp(sid, myaddr, 4) != 0)) {
+    if(user_class_match(req.uc, req.uclen, "HOMENET") ||
+       (memcmp(req.sid, zeroes, 4) != 0 && memcmp(req.sid, myaddr, 4) != 0)) {
         debugf(" (ignored)\n");
         goto done;
     }
@@ -692,7 +687,7 @@ dhcpv4_receive()
 
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
-    if(broadcast || memcmp(&from.sin_addr, zeroes, 4) == 0)
+    if(req.broadcast || memcmp(&from.sin_addr, zeroes, 4) == 0)
         memcpy(&to.sin_addr, broadcast_addr, 4);
     else
         memcpy(&to.sin_addr, &from.sin_addr, 4);
@@ -703,23 +698,23 @@ dhcpv4_receive()
 
     dns = all_dhcp_data(0, 1, 0);
 
-    switch(type) {
+    switch(req.type) {
     case 1:                     /* DHCPDISCOVER */
     case 3: {                   /* DHCPREQUEST */
         struct lease *lease = NULL;
-        int have_ip = memcmp(ip, zeroes, 4) != 0;
+        int have_ip = memcmp(req.ip, zeroes, 4) != 0;
 
-        if(type != 3 || !have_ip) {
-            lease = find_matching_lease(cid, cidlen, chaddr, pl);
-            if(!prefix_list_within_v4(ip, pl))
+        if(req.type != 3 || !have_ip) {
+            lease = find_matching_lease(req.cid, req.cidlen, req.chaddr, pl);
+            if(!prefix_list_within_v4(req.ip, pl))
                 lease = NULL;
         }
 
         if(lease == NULL && have_ip) {
-            if(prefix_list_within_v4(ip, pl)) {
-                lease = find_lease(ip, 0);
+            if(prefix_list_within_v4(req.ip, pl)) {
+                lease = find_lease(req.ip, 0);
                 if(lease && !lease_expired(lease) &&
-                   !lease_match(cid, cidlen, chaddr, lease)) {
+                   !lease_match(req.cid, req.cidlen, req.chaddr, lease)) {
                     lease = NULL;
                 }
             } else {
@@ -728,12 +723,12 @@ dhcpv4_receive()
         }
 
         if(lease == NULL) {
-            if(type == 3)
+            if(req.type == 3)
                 goto nak;
-            rc = generate_v4(ip, netmask, pl);
+            rc = generate_v4(req.ip, netmask, pl);
             if(rc < 0)
                 goto nak;
-            lease = find_lease(ip, 1);
+            lease = find_lease(req.ip, 1);
         } else {
             rc = compute_netmask(netmask, lease->ip, pl);
             if(rc < 0)
@@ -743,23 +738,23 @@ dhcpv4_receive()
         if(lease == NULL)
             goto nak;
 
-        memcpy(lease->chaddr, chaddr, 16);
+        memcpy(lease->chaddr, req.chaddr, 16);
         lease->ifindex = ifindex;
-        lease->end = type == 1 ? now.tv_sec : now.tv_sec + LEASE_TIME + 10;
+        lease->end = req.type == 1 ? now.tv_sec : now.tv_sec + LEASE_TIME + 10;
         free(lease->cid);
-        lease->cidlen = cidlen;
-        lease->cid = cid;
-        cid = NULL;
+        lease->cidlen = req.cidlen;
+        lease->cid = req.cid;
+        req.cid = NULL;
 
         rc = dhcpv4_send(dhcpv4_socket, &to,
-                         type == 1 ? 2 : 5, xid, chaddr, myaddr,
+                         req.type == 1 ? 2 : 5, req.xid, req.chaddr, myaddr,
                          lease->ip, ifindex, netmask, dns, LEASE_TIME);
         if(rc < 0)
             perror("dhcpv4_send");
         break;
     }
     case 4: {                   /* DHCPDECLINE */
-        struct lease *lease = find_lease(ip, 0);
+        struct lease *lease = find_lease(req.ip, 0);
         fprintf(stderr, "Received DHCPDECLINE");
         if(lease && lease->end >= now.tv_sec) {
             fprintf(stderr, " (already assigned).\n");
@@ -768,7 +763,7 @@ dhcpv4_receive()
             free(lease->cid);
             lease->cid = NULL;
             lease->cidlen = 0;
-            cid = NULL;
+            req.cid = NULL;
             memset(lease->chaddr, 0, 16);
             lease->end = now.tv_sec + LEASE_TIME;
         } else {
@@ -777,14 +772,15 @@ dhcpv4_receive()
         break;
     }
     case 7: {                   /* DHCPRELEASE */
-        struct lease *lease = find_matching_lease(cid, cidlen, chaddr, NULL);
+        struct lease *lease =
+            find_matching_lease(req.cid, req.cidlen, req.chaddr, NULL);
         if(lease)
             lease->end = now.tv_sec;
         break;
     }
     case 8: {                   /* DHCPINFORM */
         rc = dhcpv4_send(dhcpv4_socket, &to,
-                         5, xid, chaddr, myaddr,
+                         5, req.xid, req.chaddr, myaddr,
                          NULL, ifindex, NULL, dns, 0);
         if(rc < 0)
             perror("dhcpv4_send");
@@ -795,12 +791,13 @@ dhcpv4_receive()
     goto done;
 
  nak:
-    if(type == 3)
-        dhcpv4_send(dhcpv4_socket, &to, 6, xid, chaddr, myaddr, ip, ifindex,
+    if(req.type == 3)
+        dhcpv4_send(dhcpv4_socket, &to, 6, req.xid, req.chaddr,
+                    myaddr, req.ip, ifindex,
                     NULL, NULL, 0);
  done:
-    free(cid);
-    free(uc);
+    free(req.cid);
+    free(req.uc);
     destroy_prefix_list(dns);
     destroy_prefix_list(pl);
     return 1;
