@@ -733,7 +733,7 @@ dhcpv4_receive()
 
         if(req.type == 1) {
             lease = find_matching_lease(req.cid, req.cidlen, req.chaddr, pl);
-            if(!prefix_list_within_v4(cip, pl))
+            if(lease && !prefix_list_within_v4(lease->ip, pl))
                 lease = NULL;
         }
 
