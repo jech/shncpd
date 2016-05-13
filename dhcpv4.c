@@ -703,7 +703,7 @@ dhcpv4_receive()
     if(memcmp(req.giaddr, zeroes, 4) != 0) {
         memcpy(&to.sin_addr, req.giaddr, 4);
         dontroute = 0;
-    } else if(!req.broadcast && memcmp(req.giaddr, zeroes, 4) != 0) {
+    } else if(!req.broadcast && memcmp(req.ciaddr, zeroes, 4) != 0) {
         memcpy(&to.sin_addr, req.ciaddr, 4);
     } else {
         memcpy(&to.sin_addr, broadcast_addr, 4);
