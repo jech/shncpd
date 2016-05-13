@@ -739,7 +739,7 @@ dhcpv4_receive()
 
         if(lease == NULL && memcmp(cip, zeroes, 4) != 0) {
             if(prefix_list_within_v4(cip, pl)) {
-                lease = find_lease(cip, 0);
+                lease = find_lease(cip, req.type == 1);
                 if(lease && !lease_expired(lease) &&
                    !lease_match(req.cid, req.cidlen, req.chaddr, lease)) {
                     lease = NULL;
