@@ -723,7 +723,7 @@ dhcpv4_receive()
 
         if(req.type == 1)
             memcpy(cip, req.ip, 4);
-        else if(req.type == 1 && memcmp(req.ciaddr, zeroes, 4) != 0)
+        else if(memcmp(req.ciaddr, zeroes, 4) != 0)
             memcpy(cip, req.ciaddr, 4);
         else
             memcpy(cip, req.ip, 4);
