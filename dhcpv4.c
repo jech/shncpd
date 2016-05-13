@@ -426,7 +426,8 @@ dhcpv4_parse(unsigned char *buf, int buflen,
 #define LONG(_v) DO_HTONL(buf + i, (_v)); i += 4
 
 static int
-dhcpv4_send(int s, struct sockaddr_in *to, int type, const unsigned char *xid,
+dhcpv4_send(int s, struct sockaddr_in *to, int dontroute,
+            int type, const unsigned char *xid,
             const unsigned char *chaddr, const unsigned char *myaddr,
             const unsigned char *ip, int ifindex,
             const unsigned char *netmask, struct prefix_list *dns,
@@ -525,7 +526,7 @@ dhcpv4_send(int s, struct sockaddr_in *to, int type, const unsigned char *xid,
     if(rc < 0)
         return -1;
 
-    rc = sendto(dhcpv4_socket, buf, i, MSG_DONTROUTE,
+    rc = sendto(dhcpv4_socket, buf, i, dontroute ? MSG_DONTROUTE : 0,
                 (struct sockaddr*)to, sizeof(*to));
 
     setsockopt(dhcpv4_socket, SOL_SOCKET, SO_BINDTODEVICE, NULL, 0);
@@ -614,6 +615,7 @@ dhcpv4_receive()
     int i, rc, buflen;
     const char broadcast_addr[4] = {255, 255, 255, 255};
     struct sockaddr_in from, to;
+    int dontroute = 1;
     int bufsiz = 1500;
     unsigned char buf[bufsiz];
     unsigned char myaddr[4];
@@ -698,10 +700,14 @@ dhcpv4_receive()
 
     memset(&to, 0, sizeof(to));
     to.sin_family = AF_INET;
-    if(req.broadcast || memcmp(&from.sin_addr, zeroes, 4) == 0)
+    if(memcmp(req.giaddr, zeroes, 4) != 0) {
+        memcpy(&to.sin_addr, req.giaddr, 4);
+        dontroute = 0;
+    } else if(!req.broadcast && memcmp(req.giaddr, zeroes, 4) != 0) {
+        memcpy(&to.sin_addr, req.ciaddr, 4);
+    } else {
         memcpy(&to.sin_addr, broadcast_addr, 4);
-    else
-        memcpy(&to.sin_addr, &from.sin_addr, 4);
+    }
     to.sin_port = htons(68);
 
     if(!interface_dhcpv4(interface))
@@ -757,7 +763,7 @@ dhcpv4_receive()
         lease->cid = req.cid;
         req.cid = NULL;
 
-        rc = dhcpv4_send(dhcpv4_socket, &to,
+        rc = dhcpv4_send(dhcpv4_socket, &to, dontroute,
                          req.type == 1 ? 2 : 5, req.xid, req.chaddr, myaddr,
                          lease->ip, ifindex, netmask, dns, LEASE_TIME);
         if(rc < 0)
@@ -790,7 +796,7 @@ dhcpv4_receive()
         break;
     }
     case 8: {                   /* DHCPINFORM */
-        rc = dhcpv4_send(dhcpv4_socket, &to,
+        rc = dhcpv4_send(dhcpv4_socket, &to, dontroute,
                          5, req.xid, req.chaddr, myaddr,
                          NULL, ifindex, NULL, dns, 0);
         if(rc < 0)
@@ -802,8 +808,11 @@ dhcpv4_receive()
     goto done;
 
  nak:
+    /* NAK is always sent to broadcast address, except in relay case. */
+    if(memcmp(req.giaddr, zeroes, 4) == 0)
+        memcpy(&to.sin_addr, broadcast_addr, 4);
     if(req.type == 3)
-        dhcpv4_send(dhcpv4_socket, &to, 6, req.xid, req.chaddr,
+        dhcpv4_send(dhcpv4_socket, &to, dontroute, 6, req.xid, req.chaddr,
                     myaddr, req.ip, ifindex,
                     NULL, NULL, 0);
  done:
