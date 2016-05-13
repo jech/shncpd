@@ -101,7 +101,9 @@ kernel_route(int ifindex, const char *ifname,
             return -1;
         }
         type = "";
-        metric = "";
+        /* Unfortunately, Linux doesn't allow duplicate routes even if they
+           have different protocol numbers. */
+        metric = " metric 512";
     } else {
         iface[0] = '\0';
         type = " unreachable";
