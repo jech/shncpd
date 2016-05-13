@@ -719,17 +719,27 @@ dhcpv4_receive()
     case 1:                     /* DHCPDISCOVER */
     case 3: {                   /* DHCPREQUEST */
         struct lease *lease = NULL;
-        int have_ip = memcmp(req.ip, zeroes, 4) != 0;
+        unsigned char cip[4];
 
-        if(req.type != 3 || !have_ip) {
+        if(req.type == 1)
+            memcpy(cip, req.ip, 4);
+        else if(req.type == 1 && memcmp(req.ciaddr, zeroes, 4) != 0)
+            memcpy(cip, req.ciaddr, 4);
+        else
+            memcpy(cip, req.ip, 4);
+
+        if(req.type == 3 && memcmp(cip, zeroes, 4) == 0)
+            goto nak;
+
+        if(req.type == 1) {
             lease = find_matching_lease(req.cid, req.cidlen, req.chaddr, pl);
-            if(!prefix_list_within_v4(req.ip, pl))
+            if(!prefix_list_within_v4(cip, pl))
                 lease = NULL;
         }
 
-        if(lease == NULL && have_ip) {
-            if(prefix_list_within_v4(req.ip, pl)) {
-                lease = find_lease(req.ip, 0);
+        if(lease == NULL && memcmp(cip, zeroes, 4) != 0) {
+            if(prefix_list_within_v4(cip, pl)) {
+                lease = find_lease(cip, 0);
                 if(lease && !lease_expired(lease) &&
                    !lease_match(req.cid, req.cidlen, req.chaddr, lease)) {
                     lease = NULL;
@@ -742,10 +752,10 @@ dhcpv4_receive()
         if(lease == NULL) {
             if(req.type == 3)
                 goto nak;
-            rc = generate_v4(req.ip, netmask, pl);
+            rc = generate_v4(cip, netmask, pl);
             if(rc < 0)
                 goto nak;
-            lease = find_lease(req.ip, 1);
+            lease = find_lease(cip, 1);
         } else {
             rc = compute_netmask(netmask, lease->ip, pl);
             if(rc < 0)
