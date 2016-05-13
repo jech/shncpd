@@ -367,11 +367,7 @@ parse_node_state(struct node *node)
                 debugf("Truncated VERSION\n");
                 goto fail;
             }
-            debugf("     VERSION %d\n", (int)tlv[4]);
-            if(tlv[4] != 1) {
-                fprintf(stderr, "Unexpected version.\n");
-                goto fail;
-            }
+            debugf("     VERSION\n");
             memcpy(node->capabilities, tlv + 6, 2);
             break;
         }

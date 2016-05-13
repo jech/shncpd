@@ -205,7 +205,7 @@ format_my_state(unsigned char *buf, int buflen)
     CHECK(11);
     SHORT(32);
     SHORT(12);
-    SHORT(0x100);
+    SHORT(0);
     BYTE(0);
     BYTE(interface_dhcpv4_prio(neighs[j].interface) & 0x0F);
 
