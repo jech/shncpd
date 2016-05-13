@@ -720,6 +720,7 @@ dhcpv4_receive()
     case 3: {                   /* DHCPREQUEST */
         struct lease *lease = NULL;
         unsigned char cip[4];
+        int have_cip;
 
         if(req.type == 1)
             memcpy(cip, req.ip, 4);
@@ -728,7 +729,9 @@ dhcpv4_receive()
         else
             memcpy(cip, req.ip, 4);
 
-        if(req.type == 3 && memcmp(cip, zeroes, 4) == 0)
+        have_cip = memcmp(cip, zeroes, 4) != 0;
+
+        if(req.type == 3 && !have_cip)
             goto nak;
 
         if(req.type == 1) {
@@ -737,7 +740,7 @@ dhcpv4_receive()
                 lease = NULL;
         }
 
-        if(lease == NULL && memcmp(cip, zeroes, 4) != 0) {
+        if(lease == NULL && have_cip) {
             if(prefix_list_within_v4(cip, pl)) {
                 lease = find_lease(cip, req.type == 1);
                 if(lease && !lease_expired(lease) &&
