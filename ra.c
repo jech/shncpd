@@ -42,7 +42,7 @@ int ra_socket = -1;
 int
 setup_ra_socket()
 {
-    int s, i, rc, one = 1, two = 2, ff = 255;
+    int s, i, rc, one = 1, ff = 255;
     struct icmp6_filter filter;
 
     if(ra_socket >= 0) {
@@ -53,10 +53,6 @@ setup_ra_socket()
     s = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
     if(s < 0)
         return -1;
-
-    rc = setsockopt(s, IPPROTO_RAW, IPV6_CHECKSUM, &two, sizeof(two));
-    if(rc < 0)
-        goto fail;
 
     rc = setsockopt(s, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ff, sizeof(ff));
     if(rc < 0)
