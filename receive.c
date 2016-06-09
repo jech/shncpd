@@ -518,14 +518,14 @@ parse_external(struct node *node, const unsigned char *buf, int buflen)
             break;
         }
         case 37: {
-            debugf("       DHCPV6-DATA\n");
-            parse_dhcpv6(tlv + 4, bodylen, &ext->dns, &ext->ntp);
+            debugf("       DHCPV4-DATA\n");
+            parse_dhcpv4(tlv + 4, bodylen, &ext->dns, &ext->ntp);
             data_change_time = now;
             break;
         }
         case 38: {
-            debugf("       DHCPV4-DATA\n");
-            parse_dhcpv4(tlv + 4, bodylen, &ext->dns, &ext->ntp);
+            debugf("       DHCPV6-DATA\n");
+            parse_dhcpv6(tlv + 4, bodylen, &ext->dns, &ext->ntp);
             data_change_time = now;
             break;
         }
