@@ -51,7 +51,7 @@ THE SOFTWARE.
 #include "util.h"
 #include "kernel.h"
 
-#define RECVBUF_SIZE 4000
+#define RECVBUF_SIZE (32 * 1024)
 struct timespec now;
 
 static volatile sig_atomic_t exiting = 0, dumping = 0, rescan = 0;
