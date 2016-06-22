@@ -7,13 +7,11 @@ DEFINES = $(PLATFORM_DEFINES)
 
 CFLAGS = $(CDEBUGFLAGS) $(DEFINES) $(EXTRA_DEFINES)
 
-LDLIBS = -lbsd
-
 SRCS = shncpd.c state.c send.c receive.c ra.c dhcpv4.c prefix.c \
-       local.c trickle.c kernel.c util.c
+       local.c trickle.c kernel.c util.c md5.c
 
 OBJS = shncpd.o state.o send.o receive.o ra.o dhcpv4.o prefix.o \
-       local.o trickle.o kernel.o util.o
+       local.o trickle.o kernel.o util.o md5.o
 
 shncpd: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o shncpd $(OBJS) $(LDLIBS)

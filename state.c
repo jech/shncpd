@@ -33,21 +33,7 @@ THE SOFTWARE.
 #include "send.h"
 #include "prefix.h"
 #include "util.h"
-
-#ifdef USE_LIBUBOX
-#include <libubox/md5.h>
-#define MD5Init(ctx) md5_begin(ctx)
-#define MD5Final(x,ctx) md5_end(x,ctx)
-#define MD5Update(ctx,x,y) md5_hash(x,y,ctx)
-#define MD5_CTX md5_ctx_t
-#elif USE_OPENSSL
-#include <openssl/md5.h>
-#define MD5Init(ctx) MD5_Init(ctx)
-#define MD5Final(x,ctx) MD5_Final(x,ctx)
-#define MD5Update(ctx,x,y) MD5_Update(ctx,x,y)
-#else
-#include <bsd/md5.h>
-#endif
+#include "md5.h"
 
 struct interface interfaces[MAXINTERFACES];
 int numinterfaces = 0;
@@ -328,31 +314,31 @@ republish(int do_neighs, int reset)
 void
 node_hash(unsigned char *h, const unsigned char *data, int len)
 {
-    MD5_CTX ctx;
+    md5_state_t ms;
     unsigned char digest[16];
-    MD5Init(&ctx);
-    MD5Update(&ctx, data, len);
-    MD5Final(digest, &ctx);
+    md5_init(&ms);
+    md5_append(&ms, data, len);
+    md5_finish(&ms, digest);
     memcpy(h, digest, 8);
 }
 
 int
 network_hash(unsigned char *h)
 {
-    MD5_CTX ctx;
+    md5_state_t ms;
     unsigned char digest[16];
     int i;
 
     /* This relies on the node table being sorted. */
 
-    MD5Init(&ctx);
+    md5_init(&ms);
     for(i = 0; i < numnodes; i++) {
         unsigned char s[4];
         DO_HTONL(s, nodes[i].seqno);
-        MD5Update(&ctx, s, 4);
-        MD5Update(&ctx, nodes[i].datahash, 8);
+        md5_append(&ms, s, 4);
+        md5_append(&ms, nodes[i].datahash, 8);
     }
-    MD5Final(digest, &ctx);
+    md5_finish(&ms, digest);
     memcpy(h, digest, 8);
     return 1;
 }
