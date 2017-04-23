@@ -7,6 +7,8 @@ DEFINES = $(PLATFORM_DEFINES)
 
 CFLAGS = $(CDEBUGFLAGS) $(DEFINES) $(EXTRA_DEFINES)
 
+LDLIBS = -lrt
+
 SRCS = shncpd.c state.c send.c receive.c ra.c dhcpv4.c prefix.c \
        local.c trickle.c kernel.c util.c md5.c
 
