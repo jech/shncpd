@@ -486,7 +486,8 @@ main(int argc, char **argv)
                 ts_add_random(&k, &k, HNCP_I_min / 2);
                 ts_min(&ts, &k);
             }
-            ts_min(&ts, &interfaces[i].ra_timeout);
+           if(serve_ra)
+               ts_min(&ts, &interfaces[i].ra_timeout);
         }
 
         FD_ZERO(&readfds);
