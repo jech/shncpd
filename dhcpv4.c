@@ -721,6 +721,7 @@ dhcpv4_receive()
         struct lease *lease = NULL;
         unsigned char cip[4];
         int have_cip;
+        time_t lease_end;
 
         if(req.type == 1)
             memcpy(cip, req.ip, 4);
@@ -770,7 +771,10 @@ dhcpv4_receive()
 
         memcpy(lease->chaddr, req.chaddr, 16);
         lease->ifindex = ifindex;
-        lease->end = req.type == 1 ? now.tv_sec : now.tv_sec + LEASE_TIME + 10;
+        lease_end = req.type == 1 ? now.tv_sec : now.tv_sec + LEASE_TIME + 10;
+        if(lease->end < lease_end) {
+            lease->end = lease_end;
+        }
         free(lease->cid);
         lease->cidlen = req.cidlen;
         lease->cid = req.cid;
