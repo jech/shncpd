@@ -37,6 +37,7 @@ THE SOFTWARE.
 #include "state.h"
 #include "prefix.h"
 #include "util.h"
+#include "dhcpv4.h"
 
 /* Yes, this is an unusual combination. */
 
